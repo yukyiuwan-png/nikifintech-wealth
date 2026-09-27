@@ -1,0 +1,3385 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="robots" content="noindex, nofollow" />
+  <meta name="referrer" content="no-referrer" />
+  <title>HK Client Wealth Check · 客戶理財診斷</title>
+  <!-- Only allowed external resources: fonts + ECharts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600;700&family=Source+Sans+3:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.1/dist/echarts.min.js"></script>
+  <style>
+    :root {
+      --bg0: #f7f5f0;
+      --bg1: #f2eee6;
+      --surface: #ffffff;
+      --surface-2: #fbfaf7;
+      --ink: #0b1f3a;
+      --ink-soft: #3e4c5e;
+      --muted: #5f6b7a;
+      --line: #e6e1d6;
+      --line-strong: #d8d1c2;
+      --brand: #0b1f3a;
+      --brand-deep: #06142a;
+      --brand-hover: #1c3456;
+      --brand-soft: #eef1f5;
+      --brand-tint: #c9d2de;
+      --accent: #b8975a;
+      --accent-deep: #8a6a2f;
+      --accent-soft: #f6f0e4;
+      --ok: #2f6b4f;
+      --ok-bg: #eef4ef;
+      --ok-line: #cadcd0;
+      --warn: #a8741a;
+      --warn-ink: #7a5210;
+      --warn-bg: #fbf5e8;
+      --warn-line: #ead8b2;
+      --danger: #9b2c2c;
+      --danger-bg: #f8ecec;
+      --danger-line: #e8c9c9;
+      --radius: 14px;
+      --shadow: 0 1px 2px rgba(11, 31, 58, 0.04), 0 6px 20px rgba(11, 31, 58, 0.05);
+      --focus-ring: 0 0 0 3px rgba(184, 151, 90, 0.3);
+      --nav-h: 64px;
+      --font: "Noto Sans TC", "Source Sans 3", sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      font-family: var(--font);
+      color: var(--ink-soft);
+      background: linear-gradient(180deg, #faf9f5 0%, var(--bg0) 320px, var(--bg1) 100%);
+      min-height: 100vh;
+      line-height: 1.5;
+    }
+
+    button, input, select, textarea { font: inherit; }
+    input, select {
+      width: 100%;
+      min-height: 44px;
+      padding: 10px 12px;
+      border: 1px solid var(--line-strong);
+      border-radius: 10px;
+      background: #fff;
+      color: var(--ink);
+      font-size: 16px;
+      transition: border-color .15s, box-shadow .15s;
+    }
+    input[type="number"] { font-variant-numeric: tabular-nums; }
+    input:focus, select:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: var(--focus-ring);
+    }
+    input[type="range"] {
+      min-height: auto;
+      padding: 0;
+      border: none;
+      box-shadow: none;
+      accent-color: var(--accent);
+    }
+    label.field {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--ink-soft);
+    }
+    .hint {
+      font-size: 12px;
+      font-weight: 400;
+      color: var(--muted);
+    }
+
+    .nav {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      height: var(--nav-h);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 0 16px;
+      background: rgba(255, 255, 255, 0.92);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--line);
+    }
+    h1, h2, h3, .brand-name { color: var(--ink); }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 0;
+    }
+    .brand-mark {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      background: var(--brand);
+      border: 1px solid rgba(184, 151, 90, 0.55);
+      display: grid;
+      place-items: center;
+      flex-shrink: 0;
+      box-shadow: 0 4px 12px rgba(11, 31, 58, 0.18);
+    }
+    .brand-mark svg { display: block; }
+    .brand-mark svg path:first-child { stroke: var(--accent); }
+    .brand-text { min-width: 0; }
+    .brand-name {
+      font-weight: 700;
+      font-size: 15px;
+      letter-spacing: 0.01em;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .brand-sub {
+      font-size: 11px;
+      color: var(--muted);
+      white-space: nowrap;
+    }
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+    .privacy-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: var(--ok-bg);
+      color: var(--ok);
+      font-size: 11px;
+      font-weight: 600;
+      border: 1px solid var(--ok-line);
+      max-width: 220px;
+    }
+    .privacy-pill svg { flex-shrink: 0; }
+    .lang-toggle {
+      display: inline-flex;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      overflow: hidden;
+      background: #fff;
+    }
+    .lang-toggle button {
+      border: none;
+      background: transparent;
+      padding: 8px 12px;
+      cursor: pointer;
+      color: var(--muted);
+      font-weight: 600;
+      font-size: 12px;
+    }
+    .lang-toggle button.active {
+      background: var(--brand);
+      color: #fff;
+    }
+    .btn {
+      border: none;
+      border-radius: 10px;
+      padding: 10px 14px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 13px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: transform .12s, background .15s, box-shadow .15s;
+    }
+    .btn:active { transform: translateY(1px); }
+    .btn-ghost {
+      background: #fff;
+      border: 1px solid var(--line);
+      color: var(--ink-soft);
+    }
+    .btn-ghost:hover { background: var(--brand-soft); }
+    .btn-primary {
+      background: var(--brand);
+      color: #fff;
+      box-shadow: 0 4px 12px rgba(11, 31, 58, 0.18);
+    }
+    .btn-primary:hover { background: var(--brand-hover); }
+    .btn-primary[data-print-report] { border: 1px solid var(--accent); }
+    .btn-primary[data-print-report] svg { color: var(--accent); }
+    .btn-danger {
+      background: var(--danger-bg);
+      color: var(--danger);
+      border: 1px solid var(--danger-line);
+    }
+    .btn-sm { padding: 7px 10px; font-size: 12px; min-height: 34px; }
+
+    .wrap {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 18px 16px 48px;
+    }
+    .hero-line {
+      margin: 0 0 16px;
+      font-size: 14px;
+      color: var(--ink-soft);
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      gap: 16px;
+    }
+
+    .panel {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+    .panel-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--line);
+      flex-wrap: wrap;
+    }
+    .panel-actions {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .panel-title {
+      margin: 0;
+      font-size: 16px;
+      font-weight: 700;
+      letter-spacing: 0.01em;
+    }
+    .panel-title::after {
+      content: "";
+      display: block;
+      width: 28px;
+      height: 2px;
+      margin-top: 6px;
+      border-radius: 2px;
+      background: var(--accent);
+    }
+    .panel-body { padding: 12px 16px 16px; }
+
+    details.section {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: var(--surface-2);
+      margin-bottom: 10px;
+      overflow: hidden;
+    }
+    details.section[open] { background: #fff; }
+    details.section > summary {
+      list-style: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 12px 14px;
+      font-weight: 700;
+      font-size: 14px;
+      letter-spacing: 0.01em;
+      color: var(--ink);
+      user-select: none;
+    }
+    details.section > summary::-webkit-details-marker { display: none; }
+    .summary-left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .chev {
+      width: 18px;
+      height: 18px;
+      color: var(--muted);
+      transition: transform .2s;
+    }
+    details.section[open] .chev { transform: rotate(180deg); }
+    .section-body {
+      padding: 0 14px 14px;
+      display: grid;
+      gap: 12px;
+    }
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 12px;
+    }
+    @media (min-width: 560px) {
+      .grid-2 { grid-template-columns: 1fr 1fr; }
+    }
+
+    .dyn-list { display: grid; gap: 10px; }
+    .dyn-card {
+      border: 1px dashed var(--line-strong);
+      border-radius: 12px;
+      padding: 12px;
+      background: var(--surface-2);
+      display: grid;
+      gap: 10px;
+    }
+    .dyn-card-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+    }
+    .dyn-card-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--ink);
+    }
+    .inline-note {
+      font-size: 12px;
+      color: var(--muted);
+      margin: 0;
+    }
+    .alert {
+      border-radius: 10px;
+      padding: 10px 12px;
+      font-size: 13px;
+      border: 1px solid transparent;
+    }
+    .alert-info { background: var(--brand-soft); border-color: var(--brand-tint); color: var(--ink); }
+    .alert-warn { background: var(--warn-bg); border-color: var(--warn-line); color: var(--warn-ink); }
+    .alert-danger { background: var(--danger-bg); border-color: var(--danger-line); color: var(--danger); }
+    .alert-ok { background: var(--ok-bg); border-color: var(--ok-line); color: var(--ok); }
+
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    .kpi {
+      border-radius: 12px;
+      padding: 12px;
+      border: 1px solid var(--line);
+      background: #fff;
+      min-height: 96px;
+    }
+    .kpi .label {
+      font-size: 12px;
+      color: var(--muted);
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+    .kpi .value {
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: -0.025em;
+      color: var(--ink);
+      font-variant-numeric: tabular-nums;
+    }
+    .kpi .sub {
+      font-size: 11px;
+      margin-top: 4px;
+      font-weight: 600;
+    }
+    .kpi.ok { background: var(--ok-bg); border-color: var(--ok-line); }
+    .kpi.warn { background: var(--warn-bg); border-color: var(--warn-line); }
+    .kpi.danger { background: var(--danger-bg); border-color: var(--danger-line); }
+    .kpi.ok .sub { color: var(--ok); }
+    .kpi.warn .sub { color: var(--warn-ink); }
+    .kpi.danger .sub { color: var(--danger); }
+
+    .score-box {
+      display: grid;
+      grid-template-columns: 140px 1fr;
+      gap: 12px;
+      align-items: center;
+      margin-top: 12px;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: linear-gradient(135deg, var(--surface-2), #fff);
+    }
+    @media (max-width: 520px) {
+      .score-box { grid-template-columns: 1fr; }
+      .privacy-pill span { display: none; }
+      .privacy-pill { padding: 8px; }
+    }
+    #gaugeChart { width: 100%; height: 140px; }
+    .score-dims { display: grid; gap: 8px; }
+    .dim-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 8px;
+      font-size: 12px;
+      color: var(--ink-soft);
+      font-variant-numeric: tabular-nums;
+    }
+    .bar {
+      grid-column: 1 / -1;
+      height: 6px;
+      border-radius: 999px;
+      background: #eeeae1;
+      overflow: hidden;
+    }
+    .bar > i {
+      display: block;
+      height: 100%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, #d2bb8c, var(--accent));
+    }
+
+    .actions-list {
+      list-style: none;
+      margin: 12px 0 0;
+      padding: 0;
+      display: grid;
+      gap: 8px;
+    }
+    .action-item {
+      border-radius: 12px;
+      padding: 12px;
+      border: 1px solid var(--line);
+      display: grid;
+      gap: 4px;
+    }
+    .action-item.p1 { border-left: 4px solid var(--danger); background: #fcf6f6; }
+    .action-item.p2 { border-left: 4px solid var(--warn); background: #fdf9f0; }
+    .action-item.p3 { border-left: 4px solid var(--brand); background: #f6f7f9; }
+    .action-item.p4 { border-left: 4px solid var(--ok); background: #f4f8f5; }
+    .action-item .t { font-weight: 700; font-size: 13px; color: var(--ink); }
+    .action-item .d { font-size: 12px; color: var(--ink-soft); }
+    .action-item .a { font-size: 12px; font-weight: 700; color: var(--accent-deep); font-variant-numeric: tabular-nums; }
+
+    .whatif {
+      margin-top: 12px;
+      padding: 12px;
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: var(--surface-2);
+      display: grid;
+      gap: 10px;
+    }
+    [data-i18n="healthTitle"], [data-i18n="whatifTitle"] { color: var(--ink); }
+    #extraPayLabel { color: var(--accent-deep); font-variant-numeric: tabular-nums; }
+    .slider-row {
+      display: grid;
+      gap: 6px;
+    }
+    .slider-meta {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--ink-soft);
+    }
+    .whatif-results {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+    .mini-stat {
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 10px;
+    }
+    .mini-stat .k { font-size: 11px; color: var(--muted); font-weight: 600; }
+    .mini-stat .v { font-size: 14px; font-weight: 700; margin-top: 2px; color: var(--ink); font-variant-numeric: tabular-nums; }
+
+    .charts-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 12px;
+    }
+    @media (min-width: 760px) {
+      .charts-grid { grid-template-columns: 1fr 1fr; }
+    }
+    .chart-card {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 12px;
+      background: #fff;
+      min-height: 300px;
+    }
+    .chart-card h3 {
+      margin: 0 0 8px;
+      font-size: 14px;
+    }
+    .chart { width: 100%; height: 260px; }
+
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 8px;
+      margin-top: 12px;
+    }
+    @media (min-width: 560px) {
+      .metrics-grid { grid-template-columns: 1fr 1fr; }
+    }
+    .metric {
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 10px 12px;
+      background: var(--surface-2);
+      font-size: 13px;
+    }
+    .metric b {
+      display: block;
+      font-size: 15px;
+      margin-top: 2px;
+      color: var(--ink);
+      letter-spacing: -0.01em;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .footer {
+      margin-top: 28px;
+      padding: 18px 16px;
+      border-top: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 12px;
+      text-align: center;
+      max-width: 900px;
+      margin-left: auto;
+      margin-right: auto;
+      line-height: 1.6;
+    }
+    .icon { display: inline-block; vertical-align: -2px; }
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0,0,0,0);
+      border: 0;
+    }
+    .section-tips { display: none; }
+    @media screen and (min-width: 980px) {
+      body { font-size: 15px; }
+      .wrap { padding: 24px 24px 56px; }
+      .layout { gap: 20px; }
+      .brand-name { font-size: 17px; }
+      .brand-sub { font-size: 12px; }
+      .privacy-pill { font-size: 12px; max-width: none; }
+      .lang-toggle button { font-size: 13px; }
+      .hero-line { font-size: 16px; }
+      .btn { font-size: 14px; }
+      .btn-sm { font-size: 13px; padding: 8px 12px; }
+
+      .panel-head { padding: 16px 22px; }
+      .panel-title { font-size: 20px; }
+      .panel-body { padding: 16px 22px 22px; }
+      details.section { margin-bottom: 12px; }
+      details.section > summary { font-size: 16px; padding: 14px 18px; }
+      .section-body { padding: 0 18px 18px; gap: 14px; }
+      .section-layout {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 280px;
+        align-items: start;
+      }
+      .section-tips {
+        display: block;
+        margin: 0 18px 18px 0;
+        padding: 12px 14px;
+        border: 1px solid var(--line);
+        border-left: 2px solid var(--accent);
+        border-radius: 10px;
+        background: var(--accent-soft);
+        font-size: 13px;
+        line-height: 1.55;
+        color: var(--ink-soft);
+      }
+      .section-tips-head {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-weight: 700;
+        font-size: 13px;
+        letter-spacing: 0.04em;
+        color: var(--ink);
+      }
+      .section-tips-head svg { color: var(--accent-deep); flex-shrink: 0; }
+      .section-tips ul { margin: 8px 0 0; padding-left: 16px; }
+      .section-tips li + li { margin-top: 6px; }
+      .grid-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 18px; }
+      .grid-2 > label.field[style*="grid-column"] { grid-column: span 2 !important; }
+      label.field { font-size: 14px; }
+      .hint, .inline-note { font-size: 13px; }
+      .alert { font-size: 14px; }
+
+      .dyn-list { gap: 12px; }
+      .dyn-card { padding: 14px; }
+      .dyn-card .grid-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px 14px; }
+      .dyn-card-title { font-size: 14px; }
+
+      .kpi-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
+      .kpi { padding: 16px; min-height: 112px; }
+      .kpi .label { font-size: 14px; }
+      .kpi .value { font-size: 26px; }
+      .kpi .sub { font-size: 13px; }
+
+      .score-box { grid-template-columns: 240px 1fr; gap: 24px; padding: 16px 20px; margin-top: 16px; }
+      #gaugeChart { height: 190px; }
+      .score-dims { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 28px; margin-top: 8px; }
+      .dim-row { font-size: 14px; }
+      [data-i18n="healthTitle"],
+      [data-i18n="actionsTitle"],
+      [data-i18n="whatifTitle"] { font-size: 17px !important; }
+
+      .metrics-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-top: 16px; }
+      .metric { font-size: 14px; padding: 12px 14px; }
+      .metric b { font-size: 18px; }
+
+      .actions-list { gap: 10px; }
+      .action-item { padding: 14px 16px; }
+      .action-item .t { font-size: 15px; }
+      .action-item .d, .action-item .a { font-size: 14px; }
+
+      .whatif { padding: 16px; margin-top: 16px; }
+      .slider-meta { font-size: 14px; }
+      .whatif-results { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+      .mini-stat { padding: 12px; }
+      .mini-stat .k { font-size: 13px; }
+      .mini-stat .v { font-size: 17px; }
+
+      .charts-grid { gap: 16px; }
+      .chart-card { padding: 16px; min-height: 360px; }
+      .chart-card h3 { font-size: 16px; }
+      .chart { height: 300px; }
+
+      .footer { font-size: 13px; }
+    }
+    @media screen and (min-width: 1280px) {
+      .grid-2 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      .dyn-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+
+    .print-only { display: none; }
+
+    @page { size: A4; margin: 13mm 12mm; }
+    @media print {
+      *, *::before, *::after {
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+        box-shadow: none !important;
+        text-shadow: none !important;
+      }
+      html, body { background: #fff !important; }
+      body { min-height: 0; font-size: 10pt; line-height: 1.4; }
+
+      .nav {
+        position: static;
+        height: auto;
+        padding: 0 0 6px;
+        background: #fff;
+        backdrop-filter: none;
+        -webkit-backdrop-filter: none;
+        border-bottom: 2px solid var(--brand);
+      }
+      .brand-mark { width: 28px; height: 28px; border-radius: 8px; }
+      .brand-name { font-size: 12pt; overflow: visible; }
+      .brand-sub { font-size: 8pt; }
+      .privacy-pill { font-size: 8pt; padding: 3px 8px; max-width: none; }
+      .privacy-pill span { display: inline; }
+
+      .lang-toggle,
+      .btn,
+      .chev,
+      .section-tips,
+      .hero-line,
+      input[type="range"] { display: none !important; }
+
+      .print-only { display: block; }
+      .print-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+        gap: 12px;
+        margin: 8px 0 10px;
+      }
+      .print-head h1 { margin: 0; font-size: 15pt; color: var(--brand-deep); }
+      .print-head p { margin: 0; font-size: 9pt; color: var(--ink-soft); }
+      .print-head p[hidden] { display: none; }
+      .print-head .print-client { margin-top: 3px; font-size: 12pt; font-weight: 700; color: var(--ink); }
+      .print-meta { text-align: right; }
+
+      .wrap { max-width: none; padding: 0; }
+      .layout { display: flex; flex-direction: column; gap: 0; }
+      .layout > section:nth-child(2) { order: 1; }
+      .layout > .charts-full { order: 2; margin-top: 14px; }
+      .layout > section:first-child { order: 3; break-before: page; }
+
+      .panel { border: none; border-radius: 0; background: none; }
+      .panel-head {
+        padding: 0 0 4px;
+        border-bottom: 1.5px solid var(--brand);
+        break-after: avoid;
+      }
+      .panel-title { font-size: 13pt; color: var(--brand-deep); }
+      .panel-body { padding: 8px 0 0; }
+      h2, h3, summary { break-after: avoid; }
+
+      .kpi-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+      .kpi { min-height: 0; padding: 8px; border-radius: 8px; }
+      .kpi .label { font-size: 8pt; margin-bottom: 2px; }
+      .kpi .value { font-size: 13pt; }
+      .kpi .sub { font-size: 8pt; }
+
+      .score-box { grid-template-columns: 140px 1fr; margin-top: 8px; padding: 8px; background: #fff; }
+      #gaugeChart { height: auto; }
+      .dim-row { font-size: 8.5pt; }
+
+      .metrics-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; margin-top: 8px; }
+      .metric { padding: 6px 8px; font-size: 8.5pt; }
+      .metric b { font-size: 10pt; }
+
+      .actions-list { gap: 6px; margin-top: 6px; }
+      .action-item { padding: 8px 10px; border-radius: 8px; }
+      .action-item .t { font-size: 10pt; }
+      .action-item .d, .action-item .a { font-size: 9pt; }
+
+      .whatif { padding: 8px; gap: 6px; margin-top: 8px; }
+      .whatif-results { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+      .mini-stat { padding: 6px 8px; }
+      .mini-stat .k { font-size: 8pt; }
+      .mini-stat .v { font-size: 10pt; }
+
+      .charts-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
+      .chart-card { min-height: 0; padding: 8px; }
+      .chart-card h3 { font-size: 10pt; margin-bottom: 4px; }
+      .chart, #gaugeChart { height: auto; }
+      .chart > div:first-child,
+      #gaugeChart > div:first-child { width: 100% !important; height: auto !important; }
+      .chart canvas,
+      #gaugeChart canvas {
+        position: static !important;
+        display: block;
+        width: 100% !important;
+        height: auto !important;
+      }
+      .chart > div:not(:first-child),
+      #gaugeChart > div:not(:first-child) { display: none !important; }
+
+      details.section { margin-bottom: 8px; border-radius: 8px; background: #fff; }
+      details.section > summary { padding: 6px 10px; font-size: 10.5pt; }
+      .section-body { padding: 0 10px 8px; gap: 8px; }
+      .grid-2, .section-body.grid-2 { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px 10px; }
+      .grid-2 > label.field[style*="grid-column"] { grid-column: span 2 !important; }
+      .dyn-list { gap: 6px; }
+      .dyn-card { padding: 6px 8px; gap: 4px; border-radius: 8px; }
+      .dyn-card-title { font-size: 9pt; }
+      label.field { gap: 1px; font-size: 8.5pt; }
+      .hint, .inline-note { font-size: 7.5pt; }
+      .alert { padding: 6px 8px; font-size: 8.5pt; }
+      input, select {
+        min-height: 0;
+        padding: 1px 2px;
+        border: none;
+        border-bottom: 1px solid var(--line);
+        border-radius: 0;
+        background: transparent;
+        font-size: 10pt;
+        font-weight: 600;
+        color: var(--ink);
+        -webkit-appearance: none;
+        appearance: none;
+      }
+      input::placeholder { color: transparent; }
+      input[type="number"]::-webkit-inner-spin-button,
+      input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+
+      .kpi-grid, .kpi, .score-box, .metric, .action-item, .whatif, .charts-grid,
+      .mini-stat, .chart-card, .dyn-card, label.field, .alert,
+      .footer { break-inside: avoid; }
+
+      .footer {
+        max-width: none;
+        margin-top: 14px;
+        padding: 8px 0 0;
+        font-size: 8pt;
+        color: var(--ink-soft);
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="nav">
+    <div class="brand">
+      <div class="brand-mark" aria-hidden="true">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+          <path d="M4 18V8l8-4 8 4v10" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M9 18v-5h6v5" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <div class="brand-text">
+        <div class="brand-name" data-i18n="brand">客戶理財診斷</div>
+        <div class="brand-sub" data-i18n="brandSub">隱私優先 · 本地運算 · HKD</div>
+      </div>
+    </div>
+    <div class="nav-actions">
+      <div class="privacy-pill" title="Privacy">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M12 3l7 3v5c0 5-3.5 8.5-7 10-3.5-1.5-7-5-7-10V6l7-3z" stroke="currentColor" stroke-width="1.8"/>
+          <path d="M9.5 12.2l1.8 1.8 3.5-3.8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <span data-i18n="privacyTag">客戶數據不會離開此瀏覽器</span>
+      </div>
+      <div class="lang-toggle" role="group" aria-label="Language">
+        <button type="button" id="btnZh" class="active">繁中</button>
+        <button type="button" id="btnEn">EN</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <div class="print-only print-head">
+      <div>
+        <h1 data-i18n="printTitle">客戶理財診斷報告</h1>
+        <p class="print-client" id="printClientLine" hidden><span data-i18n="printClient">客戶：</span><span id="printClientValue"></span></p>
+      </div>
+      <div class="print-meta">
+        <p id="printAdviserLine" hidden><span data-i18n="printAdviser">顧問：</span><span id="printAdviserValue"></span></p>
+        <p><span data-i18n="printDate">報告日期：</span><span id="printDateValue"></span></p>
+      </div>
+    </div>
+    <p class="hero-line" data-i18n="heroLine">輸入客戶收支、債務與保障資料，即時生成理財健康診斷（僅存於本機記憶體）。</p>
+
+    <div class="layout">
+      <!-- LEFT: Inputs -->
+      <section class="panel" aria-labelledby="inputTitle">
+        <div class="panel-head">
+          <h2 class="panel-title" id="inputTitle" data-i18n="inputTitle">客戶資料輸入</h2>
+          <div class="panel-actions">
+            <button type="button" class="btn btn-ghost btn-sm" id="btnReset">
+              <svg class="icon" width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M4 12a8 8 0 1 0 2.3-5.6M4 4v5h5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              <span data-i18n="reset">重置</span>
+            </button>
+            <button type="button" class="btn btn-primary btn-sm" data-print-report>
+              <svg class="icon" width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M7 9V3h10v6M7 17H5a2 2 0 0 1-2-2v-4a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2h-2M7 14h10v7H7z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+              </svg>
+              <span data-i18n="genReport">生成客戶報告</span>
+            </button>
+          </div>
+        </div>
+        <div class="panel-body" id="formRoot">
+
+          <!-- 0 Personal profile -->
+          <details class="section" data-tips="profile" open>
+            <summary>
+              <span class="summary-left">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="3.5" stroke="currentColor" stroke-width="1.8"/><path d="M5 19c1.5-3.5 4-5 7-5s5.5 1.5 7 5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+                <span data-i18n="secProfile">個人資料</span>
+              </span>
+              <svg class="chev" viewBox="0 0 24 24" fill="none"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+            </summary>
+            <div class="section-body">
+              <div class="grid-2">
+                <label class="field"><span data-i18n="clientName">客戶姓名（選填）</span>
+                  <input type="text" maxlength="60" autocomplete="off" data-text-key="clientName" data-i18n-placeholder="clientNamePh" placeholder="陳大文" />
+                </label>
+                <label class="field"><span data-i18n="adviserName">顧問姓名（選填）</span>
+                  <input type="text" maxlength="60" autocomplete="off" data-text-key="adviserName" data-i18n-placeholder="adviserNamePh" placeholder="李小明" />
+                </label>
+                <label class="field"><span data-i18n="age">年齡</span>
+                  <input type="number" min="18" max="80" step="1" data-key="age" value="35" />
+                </label>
+                <label class="field"><span data-i18n="retireAge">目標退休年齡</span>
+                  <input type="number" min="40" max="80" step="1" data-key="retireAge" value="65" />
+                </label>
+                <label class="field" style="grid-column:1/-1"><span data-i18n="taxMarital">婚姻狀況</span>
+                  <select data-key="taxMarital">
+                    <option value="0" data-i18n="optSingle">單身</option>
+                    <option value="1" data-i18n="optMarriedNoInc">已婚／有配偶（配偶無收入或合併評稅）</option>
+                    <option value="2" data-i18n="optMarriedInc">已婚／有配偶（配偶有收入，分開評稅）</option>
+                  </select>
+                </label>
+                <label class="field"><span data-i18n="taxSingleParent">單親</span>
+                  <select data-key="taxSingleParent">
+                    <option value="0" data-i18n="optNo">否</option>
+                    <option value="1" data-i18n="optYes">是</option>
+                  </select>
+                </label>
+                <label class="field"><span data-i18n="taxChildren">子女人數</span>
+                  <input type="number" min="0" max="9" step="1" data-key="taxChildren" value="1" />
+                </label>
+                <label class="field"><span data-i18n="taxNewborn">其中今年出生</span>
+                  <input type="number" min="0" max="9" step="1" data-key="taxNewborn" value="0" />
+                </label>
+                <label class="field"><span data-i18n="taxParents60">供養父母／祖父母（60 歲或以上）</span>
+                  <input type="number" min="0" max="8" step="1" data-key="taxParents60" value="0" />
+                </label>
+                <label class="field"><span data-i18n="taxParents55">供養父母／祖父母（55–59 歲）</span>
+                  <input type="number" min="0" max="8" step="1" data-key="taxParents55" value="0" />
+                </label>
+                <label class="field"><span data-i18n="taxParentsLive">全年與受供養父母同住</span>
+                  <select data-key="taxParentsLive">
+                    <option value="0" data-i18n="optNo">否</option>
+                    <option value="1" data-i18n="optYes">是</option>
+                  </select>
+                </label>
+              </div>
+              <p class="inline-note" id="dependentsNote"></p>
+            </div>
+          </details>
+
+          <!-- 1 Income -->
+          <details class="section" data-tips="income" open>
+            <summary>
+              <span class="summary-left">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M12 3v18M7 8h7a3 3 0 0 1 0 6H9a3 3 0 0 0 0 6h8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+                <span data-i18n="secIncome">收入</span>
+              </span>
+              <svg class="chev" viewBox="0 0 24 24" fill="none"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+            </summary>
+            <div class="section-body grid-2">
+              <label class="field"><span data-i18n="salary">每月實得薪金</span>
+                <input type="number" min="0" step="100" data-key="salary" value="35000" />
+              </label>
+              <label class="field"><span data-i18n="sideIncome">兼職/自由職業收入</span>
+                <input type="number" min="0" step="100" data-key="sideIncome" value="0" />
+              </label>
+              <label class="field">
+                <span data-i18n="bonus">年度花紅</span>
+                <span class="hint" data-i18n="bonusHint">輸入全年數字，程式自動 ÷12 折算每月</span>
+                <input type="number" min="0" step="1000" data-key="bonusAnnual" value="24000" />
+              </label>
+              <label class="field"><span data-i18n="investIncome">投資/租金每月收入</span>
+                <input type="number" min="0" step="100" data-key="investIncome" value="0" />
+              </label>
+            </div>
+            <div class="section-body">
+              <div class="dyn-list" id="incomeList"></div>
+              <button type="button" class="btn btn-primary btn-sm" id="btnAddIncome">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/></svg>
+                <span data-i18n="addIncome">新增收入項目</span>
+              </button>
+            </div>
+          </details>
+
+          <!-- 2 Fixed expenses -->
+          <details class="section" data-tips="fixed" open>
+            <summary>
+              <span class="summary-left">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M4 10l8-6 8 6v9a1 1 0 0 1-1 1h-5v-6H10v6H5a1 1 0 0 1-1-1v-9z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
+                <span data-i18n="secFixed">固定生活開支</span>
+              </span>
+              <svg class="chev" viewBox="0 0 24 24" fill="none"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+            </summary>
+            <div class="section-body grid-2">
+              <label class="field"><span data-i18n="rent">租金或按揭月供</span>
+                <input type="number" min="0" step="100" data-key="rent" value="12000" />
+              </label>
+              <label class="field"><span data-i18n="mgmt">管理費+差餉</span>
+                <input type="number" min="0" step="50" data-key="mgmt" value="800" />
+              </label>
+              <label class="field"><span data-i18n="utilities">水電煤雜費</span>
+                <input type="number" min="0" step="50" data-key="utilities" value="900" />
+              </label>
+              <label class="field"><span data-i18n="telecom">電話、網絡串流套餐</span>
+                <input type="number" min="0" step="10" data-key="telecom" value="450" />
+              </label>
+              <label class="field"><span data-i18n="groceries">日常雜貨</span>
+                <input type="number" min="0" step="50" data-key="groceries" value="3500" />
+              </label>
+              <label class="field"><span data-i18n="dining">外出用餐及咖啡消費</span>
+                <input type="number" min="0" step="50" data-key="dining" value="2500" />
+              </label>
+              <label class="field" style="grid-column:1/-1">
+                <span data-i18n="essentialOverride">每月必要開支</span>
+                <span class="hint" data-i18n="essentialHint">自動計算，可手動修改</span>
+                <input type="number" min="0" step="100" data-key="essentialOverride" id="essentialInput" value="0" />
+              </label>
+            </div>
+            <div class="section-body">
+              <div class="dyn-list" id="expenseList"></div>
+              <button type="button" class="btn btn-primary btn-sm" id="btnAddExpense">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/></svg>
+                <span data-i18n="addExpense">新增開支項目</span>
+              </button>
+            </div>
+          </details>
+
+          <!-- 2a Vehicles -->
+          <details class="section" data-tips="car">
+            <summary>
+              <span class="summary-left">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M5 16V11l2-5h10l2 5v5M5 16h14M5 16v2M19 16v2M3 11h18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><circle cx="8" cy="13.5" r="1" fill="currentColor"/><circle cx="16" cy="13.5" r="1" fill="currentColor"/></svg>
+                <span data-i18n="secCar">汽車開支</span>
+              </span>
+              <svg class="chev" viewBox="0 0 24 24" fill="none"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+            </summary>
+            <div class="section-body">
+              <p class="inline-note" data-i18n="carIntro">全年項目自動 ÷12 折算每月；車貸請在「債務」加入。</p>
+              <div class="dyn-list" id="carList"></div>
+              <button type="button" class="btn btn-primary btn-sm" id="btnAddCar">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/></svg>
+                <span data-i18n="addCar">新增車輛</span>
+              </button>
+              <p class="inline-note" id="carSummary"></p>
+            </div>
+          </details>
+
+          <!-- 2b Salaries tax -->
+          <details class="section" data-tips="tax">
+            <summary>
+              <span class="summary-left">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M7 3h7l5 5v13H7z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M14 3v5h5M10 13h6M10 17h6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+                <span data-i18n="secTax">薪俸稅（香港）</span>
+              </span>
+              <svg class="chev" viewBox="0 0 24 24" fill="none"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+            </summary>
+            <div class="section-body">
+              <p class="inline-note" data-i18n="taxIntro">按《稅務條例》2025/26 課稅年度薪俸稅規則估算：累進稅率與標準稅率取較低者，稅款按月攤分計入開支。</p>
+              <div class="grid-2">
+                <label class="field"><span data-i18n="taxInclude">計入每月開支</span>
+                  <select data-key="taxInclude">
+                    <option value="1" data-i18n="optYes">是</option>
+                    <option value="0" data-i18n="optNo">否</option>
+                  </select>
+                </label>
+                <label class="field">
+                  <span data-i18n="taxAssessOverride">全年應評稅入息</span>
+                  <span class="hint" data-i18n="taxAssessHint">0 = 自動估算：月薪（還原僱員強積金供款）×12 + 花紅 + 兼職收入×12；租金收入屬物業稅，不計入</span>
+                  <input type="number" min="0" step="1000" data-key="taxAssessOverride" value="0" />
+                </label>
+                <label class="field">
+                  <span data-i18n="taxTvc">可扣稅自願性供款 TVC（全年）</span>
+                  <span class="hint" data-i18n="taxTvcHint">與合資格延期年金保費合共上限 HKD 60,000；年金保費由保單自動計入</span>
+                  <input type="number" min="0" step="1000" data-key="taxTvc" value="0" />
+                </label>
+                <label class="field">
+                  <span data-i18n="taxHomeLoan">居所貸款利息（全年）</span>
+                  <span class="hint" data-i18n="taxHousingHint">與住宅租金合共上限 HKD 100,000（有子女 HKD 120,000）</span>
+                  <input type="number" min="0" step="1000" data-key="taxHomeLoan" value="0" />
+                </label>
+                <label class="field"><span data-i18n="taxRent">住宅租金（全年）</span>
+                  <input type="number" min="0" step="1000" data-key="taxRent" value="0" />
+                </label>
+                <label class="field"><span data-i18n="taxSelfEdu">個人進修開支（上限 100,000）</span>
+                  <input type="number" min="0" step="1000" data-key="taxSelfEdu" value="0" />
+                </label>
+                <label class="field"><span data-i18n="taxElderly">長者住宿照顧開支（上限 100,000）</span>
+                  <input type="number" min="0" step="1000" data-key="taxElderly" value="0" />
+                </label>
+                <label class="field"><span data-i18n="taxDonation">認可慈善捐款（上限為入息 35%）</span>
+                  <input type="number" min="0" step="100" data-key="taxDonation" value="0" />
+                </label>
+                <label class="field">
+                  <span data-i18n="taxReliefCap">一次性寬減稅款上限</span>
+                  <span class="hint" data-i18n="taxReliefHint">按當年財政預算案輸入（例如 2024/25 為 100% 寬減，上限 HKD 1,500）；不確定可填 0</span>
+                  <input type="number" min="0" step="100" data-key="taxReliefCap" value="0" />
+                </label>
+              </div>
+              <div class="alert alert-info" id="taxResult"></div>
+            </div>
+          </details>
+
+          <!-- 3 Subscriptions -->
+          <details class="section" data-tips="subs">
+            <summary>
+              <span class="summary-left">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><rect x="4" y="5" width="16" height="14" rx="2" stroke="currentColor" stroke-width="1.8"/><path d="M8 9h8M8 13h5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+                <span data-i18n="secSubs">訂閱及經常性開支</span>
+              </span>
+              <svg class="chev" viewBox="0 0 24 24" fill="none"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+            </summary>
+            <div class="section-body">
+              <div class="dyn-list" id="subsList"></div>
+              <button type="button" class="btn btn-primary btn-sm" id="btnAddSub">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/></svg>
+                <span data-i18n="addSub">新增訂閱</span>
+              </button>
+              <p class="inline-note" id="subsSummary"></p>
+              <div class="alert alert-info" id="subsTip"></div>
+            </div>
+          </details>
+
+          <!-- 4 Debts -->
+          <details class="section" data-tips="debt" open>
+            <summary>
+              <span class="summary-left">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><rect x="3" y="6" width="18" height="12" rx="2" stroke="currentColor" stroke-width="1.8"/><path d="M3 10h18" stroke="currentColor" stroke-width="1.8"/></svg>
+                <span data-i18n="secDebt">債務</span>
+              </span>
+              <svg class="chev" viewBox="0 0 24 24" fill="none"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+            </summary>
+            <div class="section-body">
+              <div class="dyn-list" id="debtList"></div>
+              <button type="button" class="btn btn-primary btn-sm" id="btnAddDebt">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/></svg>
+                <span data-i18n="addDebt">新增債務</span>
+              </button>
+              <div id="ccWarning" class="alert alert-danger" hidden></div>
+              <p class="inline-note" id="debtSummary"></p>
+            </div>
+          </details>
+
+          <!-- 5 Assets -->
+          <details class="section" data-tips="assets">
+            <summary>
+              <span class="summary-left">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M4 19V5M4 19h16M8 15l3-4 3 2 4-6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                <span data-i18n="secAssets">資產</span>
+              </span>
+              <svg class="chev" viewBox="0 0 24 24" fill="none"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+            </summary>
+            <div class="section-body grid-2">
+              <label class="field"><span data-i18n="cash">現金儲蓄</span>
+                <input type="number" min="0" step="1000" data-key="cash" value="80000" />
+              </label>
+              <label class="field"><span data-i18n="mpf">強積金 MPF 結餘</span>
+                <input type="number" min="0" step="1000" data-key="mpf" value="220000" />
+              </label>
+              <label class="field"><span data-i18n="investAssets">股票/基金市值</span>
+                <input type="number" min="0" step="1000" data-key="investAssets" value="150000" />
+              </label>
+              <label class="field"><span data-i18n="otherAssets">其他資產（黃金、加密貨幣等）</span>
+                <input type="number" min="0" step="1000" data-key="otherAssets" value="0" />
+              </label>
+            </div>
+            <div class="section-body">
+              <div class="dyn-list" id="assetList"></div>
+              <button type="button" class="btn btn-primary btn-sm" id="btnAddAsset">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/></svg>
+                <span data-i18n="addAsset">新增資產項目</span>
+              </button>
+            </div>
+          </details>
+
+          <!-- 6 Insurance -->
+          <details class="section" data-tips="ins">
+            <summary>
+              <span class="summary-left">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M12 3l8 3v6c0 5-3.4 8.4-8 10-4.6-1.6-8-5-8-10V6l8-3z" stroke="currentColor" stroke-width="1.8"/></svg>
+                <span data-i18n="secIns">保險資料</span>
+              </span>
+              <svg class="chev" viewBox="0 0 24 24" fill="none"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+            </summary>
+            <div class="section-body">
+              <p class="inline-note" data-i18n="insIntro">逐張輸入保單。儲蓄／年金保單的現金價值計入資產；其保費計入儲蓄，不當作消費。</p>
+              <div class="dyn-list" id="policyList"></div>
+              <button type="button" class="btn btn-primary btn-sm" id="btnAddPolicy">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/></svg>
+                <span data-i18n="addPolicy">新增保單</span>
+              </button>
+              <p class="inline-note" id="insSummary"></p>
+            </div>
+          </details>
+
+          <!-- 7 Goals -->
+          <details class="section" data-tips="goals" open>
+            <summary>
+              <span class="summary-left">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8" stroke="currentColor" stroke-width="1.8"/><circle cx="12" cy="12" r="4" stroke="currentColor" stroke-width="1.8"/><circle cx="12" cy="12" r="1" fill="currentColor"/></svg>
+                <span data-i18n="secGoals">理財目標</span>
+              </span>
+              <svg class="chev" viewBox="0 0 24 24" fill="none"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+            </summary>
+            <div class="section-body">
+              <p class="inline-note" data-i18n="goalsIntro">最多 3 個重大目標（置業 / 子女教育 / 婚禮）</p>
+              <div class="dyn-list" id="goalList"></div>
+              <button type="button" class="btn btn-primary btn-sm" id="btnAddGoal">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/></svg>
+                <span data-i18n="addGoal">新增理財目標</span>
+              </button>
+            </div>
+          </details>
+        </div>
+      </section>
+
+      <!-- RIGHT: KPI + actions -->
+      <section class="panel" aria-labelledby="resultTitle">
+        <div class="panel-head">
+          <h2 class="panel-title" id="resultTitle" data-i18n="resultTitle">即時診斷報告</h2>
+          <div class="panel-actions">
+            <span class="privacy-pill">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M12 3l7 3v5c0 5-3.5 8.5-7 10-3.5-1.5-7-5-7-10V6l7-3z" stroke="currentColor" stroke-width="1.8"/></svg>
+              <span data-i18n="privacyTagShort">本地運算</span>
+            </span>
+            <button type="button" class="btn btn-primary btn-sm" data-print-report>
+              <svg class="icon" width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M7 9V3h10v6M7 17H5a2 2 0 0 1-2-2v-4a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2h-2M7 14h10v7H7z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+              </svg>
+              <span data-i18n="genReport">生成客戶報告</span>
+            </button>
+          </div>
+        </div>
+        <div class="panel-body">
+          <div class="kpi-grid" id="kpiGrid"></div>
+
+          <div class="score-box">
+            <div id="gaugeChart"></div>
+            <div>
+              <div style="font-weight:700;font-size:14px;" data-i18n="healthTitle">理財健康儀表盤</div>
+              <div class="score-dims" id="scoreDims"></div>
+            </div>
+          </div>
+
+          <div class="metrics-grid" id="metricsGrid"></div>
+
+          <h3 style="margin:16px 0 0;font-size:14px;" data-i18n="actionsTitle">優先級行動建議</h3>
+          <ul class="actions-list" id="actionsList"></ul>
+
+          <div class="whatif">
+            <div style="font-weight:700;font-size:14px;" data-i18n="whatifTitle">假設測試</div>
+            <p class="inline-note" data-i18n="whatifHint">調整每月額外可投入金額，即時重算清債時間與退休預測</p>
+            <div class="slider-row">
+              <div class="slider-meta">
+                <span data-i18n="extraPay">額外每月還債/儲蓄</span>
+                <span id="extraPayLabel">HKD 2,000</span>
+              </div>
+              <input type="range" id="extraPay" min="0" max="20000" step="100" value="2000" />
+            </div>
+            <div class="whatif-results" id="whatifResults"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Charts -->
+      <section class="panel charts-full" aria-labelledby="chartsTitle">
+        <div class="panel-head">
+          <h2 class="panel-title" id="chartsTitle" data-i18n="chartsTitle">圖表分析</h2>
+        </div>
+        <div class="panel-body">
+          <div class="charts-grid">
+            <div class="chart-card">
+              <h3 data-i18n="chartExpense">開支分佈</h3>
+              <div class="chart" id="chartExpense"></div>
+            </div>
+            <div class="chart-card">
+              <h3 data-i18n="chartDebt">債務結構（本金 vs 年利率）</h3>
+              <div class="chart" id="chartDebt"></div>
+            </div>
+            <div class="chart-card">
+              <h3 data-i18n="chartPayoff">雪球 vs 雪崩還款曲線</h3>
+              <div class="chart" id="chartPayoff"></div>
+            </div>
+            <div class="chart-card">
+              <h3 data-i18n="chartNet">資產、負債與淨資產</h3>
+              <div class="chart" id="chartNet"></div>
+            </div>
+          </div>
+          <div class="metrics-grid" id="ruleGrid" style="margin-top:12px;"></div>
+        </div>
+      </section>
+    </div>
+
+    <footer class="footer">
+      <p data-i18n="disclaimer">
+        免責聲明：此工具只作教育參考，不構成任何財務、保險專業建議。所有客戶數據僅在此瀏覽器內存運算，重整或關閉頁面後即消失，不會上傳或儲存至任何伺服器。
+      </p>
+      <p style="margin-top:8px;" data-i18n="privacyTag">客戶數據不會離開此瀏覽器</p>
+    </footer>
+  </main>
+
+  <script>
+(function () {
+  'use strict';
+
+  // —— Privacy: memory-only state; no persistent browser storage or cookies ——
+  const CURRENT_YEAR = new Date().getFullYear();
+
+  const I18N = {
+    'zh-HK': {
+      brand: '客戶理財診斷',
+      brandSub: '隱私優先 · 本地運算 · HKD',
+      privacyTag: '客戶數據不會離開此瀏覽器',
+      privacyTagShort: '本地運算',
+      heroLine: '輸入客戶收支、債務與保障資料，即時生成理財健康診斷（僅存於本機記憶體）。',
+      inputTitle: '客戶資料輸入',
+      resultTitle: '即時診斷報告',
+      chartsTitle: '圖表分析',
+      reset: '重置',
+      secIncome: '收入',
+      salary: '每月實得薪金',
+      sideIncome: '兼職/自由職業收入',
+      bonus: '年度花紅',
+      bonusHint: '輸入全年數字，程式自動 ÷12 折算每月',
+      investIncome: '投資/租金每月收入',
+      secFixed: '固定生活開支',
+      rent: '租金或按揭月供',
+      mgmt: '管理費+差餉',
+      utilities: '水電煤雜費',
+      telecom: '電話、網絡串流套餐',
+      groceries: '日常雜貨',
+      dining: '外出用餐及咖啡消費',
+      secSubs: '訂閱及經常性開支',
+      addSub: '新增訂閱',
+      subName: '項目名稱',
+      subAmt: '每月金額',
+      subCat: '分類',
+      subTotal: '訂閱每月總開支',
+      subAnnual: '每年訂閱總開支',
+      subTip: '建議定期審查訂閱：若年度訂閱超過收入的 3%，可考慮清理無用項目。',
+      subTipOk: '訂閱負擔屬合理範圍，仍建議每季檢查一次。',
+      remove: '刪除',
+      secDebt: '債務',
+      addDebt: '新增債務',
+      creditor: '債權機構名稱',
+      debtType: '債務類型',
+      principal: '未償還本金',
+      apr: '年利率 %',
+      minPay: '每月最低還款額',
+      type_cc: '信用卡',
+      type_pl: '私人貸款',
+      type_car: '車貸',
+      type_mortgage: '按揭',
+      type_bnpl: '先買後付 BNPL',
+      debtTotal: '總負債',
+      debtWapr: '加權平均年利率',
+      debtDti: '每月債務償還比率',
+      ccWarn: '高息信用卡警示：發現年利率超過 30% 且仍有結餘的信用卡，建議優先清還。',
+      secAssets: '資產',
+      cash: '現金儲蓄',
+      mpf: '強積金 MPF 結餘',
+      investAssets: '股票/基金市值',
+      otherAssets: '其他資產（黃金、加密貨幣等）',
+      secIns: '保險資料',
+      lifeCover: '現有人壽保額',
+      ciCover: '危疾保額',
+      medCover: '醫療保障額',
+      premium: '每月保險保費',
+      secProfile: '個人資料',
+      secGoals: '理財目標',
+      dependentsTpl: '受養人人數（自動計算）：{n} 人 — 子女、受供養父母，以及無收入的配偶；用於計算人壽保障需要及薪俸稅免稅額。',
+      age: '年齡',
+      dependents: '受養人人數',
+      essentialOverride: '每月必要開支',
+      essentialHint: '自動計算，可手動修改',
+      retireAge: '目標退休年齡',
+      goalsIntro: '重大理財目標（置業 / 子女教育 / 婚禮 / 其他），可自由新增；按達成年份先後檢查盈餘是否足夠',
+      addGoal: '新增理財目標',
+      goalTitle: '理財目標',
+      goalType: '目標類型',
+      goalOther: '其他',
+      goalName: '目標名稱（選填）',
+      goalNamePlaceholder: '例如：旅行基金、進修',
+      goalAmt: '目標金額',
+      goalYear: '達成年份',
+      kpiSurplus: '每月盈餘',
+      kpiSaveRate: '儲蓄率',
+      kpiEmergency: '應急儲備月數',
+      kpiDti: '債務收入比',
+      statusOk: '健康',
+      statusWarn: '需留意',
+      statusBad: '偏高風險',
+      deficit: '赤字',
+      healthTitle: '理財健康儀表盤',
+      dimSave: '儲蓄率',
+      dimEmerg: '應急基金',
+      dimDebt: '債務負擔',
+      dimGap: '保障缺口',
+      dimRetire: '退休準備度',
+      scoreUnit: '分',
+      actionsTitle: '優先級行動建議',
+      whatifTitle: '假設測試',
+      whatifHint: '調整每月額外可投入金額，即時重算清債時間與退休預測',
+      extraPay: '額外每月還債/儲蓄',
+      chartExpense: '開支分佈',
+      chartDebt: '債務結構（本金 vs 年利率）',
+      chartPayoff: '雪球 vs 雪崩還款曲線',
+      chartNet: '資產、負債與淨資產',
+      disclaimer: '免責聲明：此工具只作教育參考，不構成任何財務、保險專業建議。所有客戶數據僅在此瀏覽器內存運算，重整或關閉頁面後即消失，不會上傳或儲存至任何伺服器。',
+      mIncome: '每月總收入',
+      mExpense: '每月總支出',
+      mNetWorth: '淨資產',
+      mProtGap: '人壽保障缺口',
+      mRetireNeed: '退休所需資金',
+      mRetireProj: '退休時累積資產',
+      mRetireGap: '退休資金缺口',
+      mSnowball: '雪球法清債',
+      mAvalanche: '雪崩法清債',
+      months: '個月',
+      years: '年',
+      interest: '總利息',
+      saveInterest: '較慢策略可節省利息',
+      rule502030: '50/30/20 法則檢查',
+      needs: '必要開支',
+      wants: '享樂開支',
+      savings: '儲蓄/盈餘',
+      over: '超支',
+      okLabel: '符合',
+      emergNeed: '建議應急基金（3–6 個月）',
+      emergGap: '應急缺口',
+      monthsShort: '個月',
+      goalHome: '置業',
+      goalEdu: '子女教育',
+      goalWed: '婚禮',
+      goalNeed: '每月需儲',
+      goalOk: '以目前盈餘可達標',
+      goalFail: '目前盈餘不足',
+      assets: '資產總值',
+      liabilities: '負債總額',
+      netWorth: '淨資產',
+      principalAxis: '本金 (HKD)',
+      aprAxis: '年利率 %',
+      balLeft: '剩餘債務',
+      snowball: '雪球法',
+      avalanche: '雪崩法',
+      payoffYears: '清債時間',
+      retireYears: '距退休',
+      retireReady: '退休充足度',
+      ready: '充足',
+      shortfall: '短缺',
+      actDebt: '優先償還高息債務',
+      actDebtDesc: '先處理年利率最高的債務，降低利息侵蝕。',
+      actEmerg: '建立應急資金',
+      actEmergDesc: '現金儲蓄應覆蓋約 3–6 個月必要開支。',
+      actGap: '補足保障缺口',
+      actGapDesc: '建議人壽保額約為年收入 10 倍並考慮受養人需要。',
+      actSave: '提高每月儲蓄',
+      actSaveDesc: '將盈餘導向目標與退休戶口。',
+      actSub: '清理訂閱開支',
+      actSubDesc: '削減非必要訂閱，釋放現金流。',
+      actRetire: '加強退休準備',
+      actRetireDesc: '以保守 3% 實質回報推算，現有儲蓄路徑可能不足。',
+      actGoal: '調整理財目標時間表',
+      actGoalDesc: '部分目標每月所需儲蓄高於現時盈餘。',
+      actGood: '維持現有良好習慣',
+      actGoodDesc: '整體理財狀況穩健，可持續定期複查。',
+      noDebt: '目前無債務紀錄',
+      forever: '超過 40 年 / 無法清還',
+      currency: 'HKD',
+      item: '項目',
+      subPlaceholder: '例如：健身會籍',
+      catPlaceholder: '例如：健康 / 影音',
+      addIncome: '新增收入項目',
+      addExpense: '新增開支項目',
+      extraIncomeTitle: '其他收入',
+      extraExpenseTitle: '其他開支',
+      itemName: '項目名稱',
+      monthlyAmt: '每月金額',
+      expenseKind: '開支性質',
+      kind_need: '必要開支',
+      kind_want: '享樂開支',
+      incomePlaceholder: '例如：政府津貼、贍養費',
+      expensePlaceholder: '例如：交通費、學費、家用',
+      addAsset: '新增資產項目',
+      extraAssetTitle: '其他資產',
+      assetValue: '市值',
+      assetPlaceholder: '例如：物業、定期存款',
+      secCar: '汽車開支',
+      carIntro: '全年項目自動 ÷12 折算每月；車貸請在「債務」加入。',
+      addCar: '新增車輛',
+      carTitle: '車輛',
+      carName: '車輛名稱',
+      carNamePlaceholder: '例如：Toyota Alphard、Tesla Model Y',
+      carUsage: '用途',
+      carUse_need: '工作／家庭必需',
+      carUse_want: '非必需（享樂）',
+      carParking: '車位月租',
+      carFuel: '每月油費／充電費',
+      carTolls: '每月隧道費、泊車費、咪錶',
+      carInsurance: '汽車保險（全年）',
+      carLicense: '車輛牌費（全年）',
+      carMaint: '維修保養、驗車（全年）',
+      carValue: '車輛現時市值',
+      carSummaryTpl: '汽車每月開支 {m} · 每年 {y} · 車輛市值合共 {v}（計入資產，不計入退休儲備）',
+      carLine: '汽車開支',
+      secTax: '薪俸稅（香港）',
+      taxIntro: '按《稅務條例》2025/26 課稅年度薪俸稅規則估算：累進稅率與標準稅率取較低者，稅款按月攤分計入開支。婚姻、子女及供養父母資料取自「個人資料」。',
+      taxInclude: '計入每月開支',
+      optYes: '是',
+      optNo: '否',
+      taxMarital: '婚姻狀況',
+      optSingle: '單身',
+      optMarriedNoInc: '已婚／有配偶（配偶無收入或合併評稅）',
+      optMarriedInc: '已婚／有配偶（配偶有收入，分開評稅）',
+      taxAssessOverride: '全年應評稅入息',
+      taxAssessHint: '0 = 自動估算：月薪（還原僱員強積金供款）×12 + 花紅 + 兼職收入×12；租金收入屬物業稅，不計入',
+      taxSingleParent: '單親',
+      taxChildren: '子女人數',
+      taxNewborn: '其中今年出生',
+      taxParents60: '供養父母／祖父母（60 歲或以上）',
+      taxParents55: '供養父母／祖父母（55–59 歲）',
+      taxParentsLive: '全年與受供養父母同住',
+      taxTvc: '可扣稅自願性供款 TVC（全年）',
+      taxTvcHint: '與合資格延期年金保費合共上限 HKD 60,000；年金保費由保單自動計入',
+      taxHomeLoan: '居所貸款利息（全年）',
+      taxHousingHint: '與住宅租金合共上限 HKD 100,000（有子女 HKD 120,000）',
+      taxRent: '住宅租金（全年）',
+      taxSelfEdu: '個人進修開支（上限 100,000）',
+      taxElderly: '長者住宿照顧開支（上限 100,000）',
+      taxDonation: '認可慈善捐款（上限為入息 35%）',
+      taxReliefCap: '一次性寬減稅款上限',
+      taxReliefHint: '按當年財政預算案輸入（例如 2024/25 為 100% 寬減，上限 HKD 1,500）；不確定可填 0',
+      taxAssessable: '應評稅入息',
+      taxDeductions: '扣除總額',
+      taxMpfDed: '其中強積金強制性供款',
+      taxAllowances: '免稅額總額',
+      taxNci: '應課稅入息實額',
+      taxProgressive: '累進稅率計算',
+      taxStandard: '標準稅率計算',
+      taxRelief: '寬減',
+      taxAnnual: '全年應繳薪俸稅（估算）',
+      taxMonthly: '每月預留',
+      taxEffective: '實際稅率',
+      taxMethodProg: '採用累進稅率',
+      taxMethodStd: '採用標準稅率',
+      taxLine: '薪俸稅',
+      insIntro: '逐張輸入保單。儲蓄／年金保單的現金價值計入資產；其保費計入儲蓄，不當作消費。',
+      addPolicy: '新增保單',
+      policyTitle: '保單',
+      policyCompany: '保險公司',
+      companyPlaceholder: '例如：友邦、保誠、宏利',
+      policyType: '保單類型',
+      pt_life: '人壽',
+      pt_ci: '危疾',
+      pt_med: '醫療',
+      pt_vhis: '自願醫保 VHIS',
+      pt_savings: '儲蓄保險',
+      pt_qdap: '合資格延期年金 QDAP',
+      pt_accident: '意外',
+      pt_other: '其他',
+      policyCover: '保額',
+      policyPremium: '每月保費',
+      policyCash: '現時現金價值',
+      insTotals: '人壽保額 {life} · 危疾 {ci} · 醫療 {med} · 每月總保費 {prem}（其中儲蓄 {save}）· 現金價值 {cash}',
+      savingsPremium: '儲蓄保險保費',
+      policyCashAsset: '保單現金價值',
+      otherIncome: '其他收入',
+      otherNeeds: '其他必要開支',
+      otherWants: '其他享樂開支',
+      printTitle: '客戶理財診斷報告',
+      printDate: '報告日期：',
+      clientName: '客戶姓名（選填）',
+      adviserName: '顧問姓名（選填）',
+      clientNamePh: '陳大文',
+      adviserNamePh: '李小明',
+      genReport: '生成客戶報告',
+      printClient: '客戶：',
+      printAdviser: '顧問：',
+      printDocTitle: '客戶理財報告',
+      tipsTitle: '參考',
+      tip_profile_1: '受養人人數按子女、受供養父母及無收入配偶自動計算。',
+      tip_profile_2: '婚姻狀況影響免稅額：配偶無收入或選擇合併評稅，可享已婚人士免稅額 HKD 264,000。',
+      tip_profile_3: '目標退休年齡預設 65 歲，可按客戶計劃調整。',
+      tip_income_1: '年度花紅請輸入全年金額，程式自動 ÷12 計入每月收入。',
+      tip_income_2: '租金收入屬物業稅範圍，不計入薪俸稅。',
+      tip_income_3: '每月實得薪金假設已扣除 5% 僱員強積金供款。',
+      tip_fixed_1: '50/30/20 法則：必要開支 ≤ 50%、享樂開支 ≤ 30%、儲蓄 ≥ 20%。',
+      tip_fixed_2: '住屋開支（租金或按揭）宜佔收入 30–40% 以下。',
+      tip_car_1: '牌費、保險、維修等全年項目自動 ÷12 攤分至每月。',
+      tip_car_2: '車貸請在「債務」加入，避免重複計算。',
+      tip_car_3: '車輛價值計入淨資產，但不計入退休儲備。',
+      tip_tax_1: '稅款取累進稅率（2% / 6% / 10% / 14% / 17%）與標準稅率（15%；入息淨額超過 HKD 500 萬的部分為 16%）之較低者。',
+      tip_tax_2: '強積金強制性供款扣除上限 HKD 18,000。',
+      tip_tax_3: 'TVC 與合資格延期年金保費合共上限 HKD 60,000；自願醫保每名受保人上限 HKD 8,000。',
+      tip_tax_4: '居所貸款利息／住宅租金上限 HKD 100,000（有子女 HKD 120,000）。',
+      tip_subs_1: '建議每季檢視一次訂閱，取消不常用的項目。',
+      tip_subs_2: '全年訂閱開支超過收入 3% 會被標示提醒。',
+      tip_debt_1: '債務佔收入比率（DTI）建議不超過 36%。',
+      tip_debt_2: '年利率超過 30% 的信用卡欠款應優先清還。',
+      tip_debt_3: '雪崩法（先還最高利率）最省利息；雪球法（先還最小結餘）較易建立還款動力。',
+      tip_assets_1: '應急基金宜以現金持有，相當於 3–6 個月必要開支。',
+      tip_assets_2: '強積金屬長期退休儲蓄，不應視作應急資金。',
+      tip_ins_1: '建議人壽保額約為年收入 10 倍，另加受養人需要。',
+      tip_ins_2: '儲蓄／年金保單保費計入儲蓄，不當作消費。',
+      tip_ins_3: '自願醫保（VHIS）及合資格延期年金（QDAP）保費可扣稅。',
+      tip_goals_1: '目標按年份先後，以每月盈餘逐一檢查是否足夠。',
+      tip_goals_2: '如資金不足，可考慮延後目標年份或調整金額。'
+    },
+    en: {
+      brand: 'Client Wealth Check',
+      brandSub: 'Privacy-first · Local only · HKD',
+      privacyTag: 'Client data never leaves this browser',
+      privacyTagShort: 'Local only',
+      heroLine: 'Enter cashflow, debts and cover to generate an instant wealth health report (memory-only).',
+      inputTitle: 'Client inputs',
+      resultTitle: 'Live diagnostic',
+      chartsTitle: 'Charts',
+      reset: 'Reset',
+      secIncome: 'Income',
+      salary: 'Monthly net salary',
+      sideIncome: 'Side / freelance income',
+      bonus: 'Annual bonus',
+      bonusHint: 'Enter annual figure; tool auto-divides by 12',
+      investIncome: 'Monthly investment / rental income',
+      secFixed: 'Fixed living costs',
+      rent: 'Rent or mortgage',
+      mgmt: 'Management fee + rates',
+      utilities: 'Utilities',
+      telecom: 'Phone, internet & streaming',
+      groceries: 'Groceries',
+      dining: 'Dining out & coffee',
+      secSubs: 'Subscriptions & recurring',
+      addSub: 'Add subscription',
+      subName: 'Name',
+      subAmt: 'Monthly amount',
+      subCat: 'Category',
+      subTotal: 'Monthly subscription total',
+      subAnnual: 'Annual subscription spend',
+      subTip: 'Review subscriptions: if annual spend exceeds 3% of income, consider cancelling unused ones.',
+      subTipOk: 'Subscription load looks reasonable; still review quarterly.',
+      remove: 'Remove',
+      secDebt: 'Debts',
+      addDebt: 'Add debt',
+      creditor: 'Creditor',
+      debtType: 'Type',
+      principal: 'Outstanding principal',
+      apr: 'APR %',
+      minPay: 'Minimum monthly payment',
+      type_cc: 'Credit card',
+      type_pl: 'Personal loan',
+      type_car: 'Car loan',
+      type_mortgage: 'Mortgage',
+      type_bnpl: 'BNPL',
+      debtTotal: 'Total liabilities',
+      debtWapr: 'Weighted avg APR',
+      debtDti: 'Debt-to-income (monthly)',
+      ccWarn: 'High-interest alert: credit card APR > 30% with balance — prioritise repayment.',
+      secAssets: 'Assets',
+      cash: 'Cash savings',
+      mpf: 'MPF balance',
+      investAssets: 'Stocks / funds market value',
+      otherAssets: 'Other assets (gold, crypto, etc.)',
+      secIns: 'Insurance',
+      lifeCover: 'Existing life cover',
+      ciCover: 'Critical illness cover',
+      medCover: 'Medical cover',
+      premium: 'Monthly insurance premium',
+      secProfile: 'Personal profile',
+      secGoals: 'Financial goals',
+      dependentsTpl: 'Dependents (auto): {n} — children, dependent parents and a non-earning spouse; used for life cover needs and tax allowances.',
+      age: 'Age',
+      dependents: 'Dependents',
+      essentialOverride: 'Monthly essential expenses',
+      essentialHint: 'Auto-calculated; editable',
+      retireAge: 'Target retirement age',
+      goalsIntro: 'Major goals (home / education / wedding / other) — add as many as needed; surplus is checked in target-year order',
+      addGoal: 'Add goal',
+      goalTitle: 'Goal',
+      goalType: 'Goal type',
+      goalOther: 'Other',
+      goalName: 'Goal name (optional)',
+      goalNamePlaceholder: 'e.g. Travel fund, further study',
+      goalAmt: 'Target amount',
+      goalYear: 'Target year',
+      kpiSurplus: 'Monthly surplus',
+      kpiSaveRate: 'Savings rate',
+      kpiEmergency: 'Emergency months',
+      kpiDti: 'Debt-to-income',
+      statusOk: 'Healthy',
+      statusWarn: 'Watch',
+      statusBad: 'Elevated risk',
+      deficit: 'Deficit',
+      healthTitle: 'Wealth health gauge',
+      dimSave: 'Savings rate',
+      dimEmerg: 'Emergency fund',
+      dimDebt: 'Debt burden',
+      dimGap: 'Protection gap',
+      dimRetire: 'Retirement readiness',
+      scoreUnit: 'pts',
+      actionsTitle: 'Priority action list',
+      whatifTitle: 'What-if test',
+      whatifHint: 'Adjust extra monthly amount to recalculate payoff & retirement',
+      extraPay: 'Extra monthly debt/savings',
+      chartExpense: 'Expense mix',
+      chartDebt: 'Debt structure (principal vs APR)',
+      chartPayoff: 'Snowball vs Avalanche curve',
+      chartNet: 'Assets, liabilities & net worth',
+      disclaimer: 'Disclaimer: This tool is for educational reference only and does not constitute financial or insurance advice. All client data is processed only in browser memory, disappears on refresh/close, and is never uploaded or stored on any server.',
+      mIncome: 'Total monthly income',
+      mExpense: 'Total monthly expenses',
+      mNetWorth: 'Net worth',
+      mProtGap: 'Life protection gap',
+      mRetireNeed: 'Capital needed at retirement',
+      mRetireProj: 'Projected assets at retirement',
+      mRetireGap: 'Retirement shortfall',
+      mSnowball: 'Snowball payoff',
+      mAvalanche: 'Avalanche payoff',
+      months: 'months',
+      years: 'years',
+      interest: 'Total interest',
+      saveInterest: 'Interest saved vs slower path',
+      rule502030: '50/30/20 rule check',
+      needs: 'Needs',
+      wants: 'Wants',
+      savings: 'Savings / surplus',
+      over: 'Over',
+      okLabel: 'OK',
+      emergNeed: 'Suggested emergency fund (3–6 mo)',
+      emergGap: 'Emergency gap',
+      monthsShort: 'mo',
+      goalHome: 'Home',
+      goalEdu: 'Education',
+      goalWed: 'Wedding',
+      goalNeed: 'Monthly saving needed',
+      goalOk: 'Achievable with current surplus',
+      goalFail: 'Current surplus insufficient',
+      assets: 'Total assets',
+      liabilities: 'Total liabilities',
+      netWorth: 'Net worth',
+      principalAxis: 'Principal (HKD)',
+      aprAxis: 'APR %',
+      balLeft: 'Remaining debt',
+      snowball: 'Snowball',
+      avalanche: 'Avalanche',
+      payoffYears: 'Payoff time',
+      retireYears: 'Years to retirement',
+      retireReady: 'Retirement readiness',
+      ready: 'On track',
+      shortfall: 'Shortfall',
+      actDebt: 'Pay high-interest debt first',
+      actDebtDesc: 'Attack the highest APR balances to cut interest drag.',
+      actEmerg: 'Build emergency fund',
+      actEmergDesc: 'Cash should cover about 3–6 months of essentials.',
+      actGap: 'Close protection gap',
+      actGapDesc: 'Suggested life cover ≈ 10× annual income plus dependent needs.',
+      actSave: 'Raise monthly savings',
+      actSaveDesc: 'Channel surplus into goals and retirement accounts.',
+      actSub: 'Trim subscriptions',
+      actSubDesc: 'Cancel unused subscriptions to free cashflow.',
+      actRetire: 'Strengthen retirement path',
+      actRetireDesc: 'At a conservative 3% real return, current path may fall short.',
+      actGoal: 'Recalibrate goal timelines',
+      actGoalDesc: 'Some goals need more monthly saving than current surplus.',
+      actGood: 'Keep the good habits',
+      actGoodDesc: 'Overall profile looks solid — review periodically.',
+      noDebt: 'No debts recorded',
+      forever: 'Over 40 years / not payable',
+      currency: 'HKD',
+      item: 'Item',
+      subPlaceholder: 'e.g. Gym membership',
+      catPlaceholder: 'e.g. Health / Media',
+      addIncome: 'Add income item',
+      addExpense: 'Add expense item',
+      extraIncomeTitle: 'Other income',
+      extraExpenseTitle: 'Other expense',
+      itemName: 'Item name',
+      monthlyAmt: 'Monthly amount',
+      expenseKind: 'Expense type',
+      kind_need: 'Essential (need)',
+      kind_want: 'Discretionary (want)',
+      incomePlaceholder: 'e.g. Allowance, alimony',
+      expensePlaceholder: 'e.g. Transport, tuition, family support',
+      addAsset: 'Add asset item',
+      extraAssetTitle: 'Other asset',
+      assetValue: 'Market value',
+      assetPlaceholder: 'e.g. Property, time deposit',
+      secCar: 'Vehicle costs',
+      carIntro: 'Annual items are divided by 12 automatically; add car loans under "Debts".',
+      addCar: 'Add vehicle',
+      carTitle: 'Vehicle',
+      carName: 'Vehicle name',
+      carNamePlaceholder: 'e.g. Toyota Alphard, Tesla Model Y',
+      carUsage: 'Usage',
+      carUse_need: 'Needed for work / family',
+      carUse_want: 'Discretionary (want)',
+      carParking: 'Monthly parking space rent',
+      carFuel: 'Monthly fuel / charging',
+      carTolls: 'Monthly tunnel tolls, parking, meters',
+      carInsurance: 'Motor insurance (annual)',
+      carLicense: 'Vehicle licence fee (annual)',
+      carMaint: 'Maintenance & inspection (annual)',
+      carValue: 'Current market value',
+      carSummaryTpl: 'Vehicle cost {m}/month · {y}/year · Total vehicle value {v} (counted in assets, not retirement savings)',
+      carLine: 'Vehicle costs',
+      secTax: 'Salaries tax (HK)',
+      taxIntro: 'Estimated under the Inland Revenue Ordinance for year of assessment 2025/26: the lower of progressive and standard rate tax, spread monthly into expenses. Marital, children and dependent parent details come from "Personal profile".',
+      taxInclude: 'Include in monthly expenses',
+      optYes: 'Yes',
+      optNo: 'No',
+      taxMarital: 'Marital status',
+      optSingle: 'Single',
+      optMarriedNoInc: 'Married / partnered (spouse no income or joint assessment)',
+      optMarriedInc: 'Married / partnered (spouse earns, separate assessment)',
+      taxAssessOverride: 'Annual assessable income',
+      taxAssessHint: '0 = auto: monthly salary (grossed up for employee MPF) ×12 + bonus + side income ×12; rental income falls under property tax and is excluded',
+      taxSingleParent: 'Single parent',
+      taxChildren: 'Number of children',
+      taxNewborn: 'Of which born this year',
+      taxParents60: 'Dependent parents/grandparents (60+)',
+      taxParents55: 'Dependent parents/grandparents (55–59)',
+      taxParentsLive: 'Lived with dependent parents all year',
+      taxTvc: 'MPF tax-deductible voluntary contributions (annual)',
+      taxTvcHint: 'Combined cap with QDAP premiums: HKD 60,000; QDAP premiums are pulled from policies automatically',
+      taxHomeLoan: 'Home loan interest (annual)',
+      taxHousingHint: 'Combined cap with domestic rent: HKD 100,000 (HKD 120,000 with children)',
+      taxRent: 'Domestic rent (annual)',
+      taxSelfEdu: 'Self-education expenses (cap 100,000)',
+      taxElderly: 'Elderly residential care (cap 100,000)',
+      taxDonation: 'Approved charitable donations (cap 35% of income)',
+      taxReliefCap: 'One-off tax reduction cap',
+      taxReliefHint: 'Per the year\'s Budget (e.g. 2024/25: 100% reduction capped at HKD 1,500); enter 0 if unsure',
+      taxAssessable: 'Assessable income',
+      taxDeductions: 'Total deductions',
+      taxMpfDed: 'incl. mandatory MPF',
+      taxAllowances: 'Total allowances',
+      taxNci: 'Net chargeable income',
+      taxProgressive: 'Progressive rates',
+      taxStandard: 'Standard rate',
+      taxRelief: 'Reduction',
+      taxAnnual: 'Estimated annual salaries tax',
+      taxMonthly: 'Monthly provision',
+      taxEffective: 'Effective rate',
+      taxMethodProg: 'progressive rates apply',
+      taxMethodStd: 'standard rate applies',
+      taxLine: 'Salaries tax',
+      insIntro: 'Enter each policy. Cash value of savings/annuity policies counts as an asset; their premiums count as savings, not spending.',
+      addPolicy: 'Add policy',
+      policyTitle: 'Policy',
+      policyCompany: 'Insurer',
+      companyPlaceholder: 'e.g. AIA, Prudential, Manulife',
+      policyType: 'Policy type',
+      pt_life: 'Life',
+      pt_ci: 'Critical illness',
+      pt_med: 'Medical',
+      pt_vhis: 'VHIS',
+      pt_savings: 'Savings insurance',
+      pt_qdap: 'QDAP (deferred annuity)',
+      pt_accident: 'Accident',
+      pt_other: 'Other',
+      policyCover: 'Sum insured',
+      policyPremium: 'Monthly premium',
+      policyCash: 'Current cash value',
+      insTotals: 'Life {life} · CI {ci} · Medical {med} · Monthly premiums {prem} (savings {save}) · Cash value {cash}',
+      savingsPremium: 'Savings insurance premium',
+      policyCashAsset: 'Policy cash value',
+      otherIncome: 'Other income',
+      otherNeeds: 'Other essentials',
+      otherWants: 'Other discretionary',
+      printTitle: 'Client Financial Diagnosis Report',
+      printDate: 'Report date: ',
+      clientName: 'Client name (optional)',
+      adviserName: 'Adviser name (optional)',
+      clientNamePh: 'Chan Tai Man',
+      adviserNamePh: 'Lee Siu Ming',
+      genReport: 'Generate client report',
+      printClient: 'Client: ',
+      printAdviser: 'Adviser: ',
+      printDocTitle: 'Client Financial Report',
+      tipsTitle: 'Reference',
+      tip_profile_1: 'Dependents are counted automatically from children, dependent parents and a non-earning spouse.',
+      tip_profile_2: 'Marital status affects allowances: the married person\'s allowance (HKD 264,000) applies if the spouse has no income or under joint assessment.',
+      tip_profile_3: 'Target retirement age defaults to 65; adjust to the client\'s plan.',
+      tip_income_1: 'Enter the full-year bonus; it is divided by 12 into monthly income.',
+      tip_income_2: 'Rental income falls under property tax, not salaries tax.',
+      tip_income_3: 'Net monthly pay is assumed to be after the 5% employee MPF contribution.',
+      tip_fixed_1: '50/30/20 rule: needs ≤ 50%, wants ≤ 30%, savings ≥ 20%.',
+      tip_fixed_2: 'Housing (rent or mortgage) should ideally stay below 30–40% of income.',
+      tip_car_1: 'Annual items (licence, insurance, maintenance) are spread monthly (÷12).',
+      tip_car_2: 'Add any car loan under Debts to avoid double counting.',
+      tip_car_3: 'Car value counts towards net worth but not retirement savings.',
+      tip_tax_1: 'Tax is the lower of progressive rates (2% / 6% / 10% / 14% / 17%) and the standard rate (15%; 16% on net income above HKD 5M).',
+      tip_tax_2: 'Mandatory MPF contributions: deduction cap HKD 18,000.',
+      tip_tax_3: 'TVC and QDAP premiums: combined cap HKD 60,000. VHIS: HKD 8,000 per insured person.',
+      tip_tax_4: 'Home loan interest / domestic rent: cap HKD 100,000 (HKD 120,000 with children).',
+      tip_subs_1: 'Review subscriptions quarterly and cancel those rarely used.',
+      tip_subs_2: 'Annual subscriptions above 3% of income are flagged.',
+      tip_debt_1: 'Debt-to-income (DTI) is recommended at 36% or below.',
+      tip_debt_2: 'Prioritise credit card balances charging over 30% APR.',
+      tip_debt_3: 'Avalanche (highest APR first) saves the most interest; snowball (smallest balance first) builds momentum.',
+      tip_assets_1: 'Hold an emergency fund of 3–6 months\' essential expenses in cash.',
+      tip_assets_2: 'MPF is long-term retirement money, not an emergency fund.',
+      tip_ins_1: 'Suggested life cover ≈ 10× annual income plus dependents\' needs.',
+      tip_ins_2: 'Savings / annuity premiums count as savings, not spending.',
+      tip_ins_3: 'VHIS and QDAP premiums are tax-deductible.',
+      tip_goals_1: 'Goals are checked in target-year order against the monthly surplus.',
+      tip_goals_2: 'If short, consider pushing back the target year or adjusting the amount.'
+    }
+  };
+
+  let lang = 'zh-HK';
+  let essentialManual = false;
+  let charts = {};
+  let gaugeChart = null;
+
+  const state = {
+    clientName: '',
+    adviserName: '',
+    salary: 35000,
+    sideIncome: 0,
+    bonusAnnual: 24000,
+    investIncome: 0,
+    rent: 12000,
+    mgmt: 800,
+    utilities: 900,
+    telecom: 450,
+    groceries: 3500,
+    dining: 2500,
+    cash: 80000,
+    mpf: 220000,
+    investAssets: 150000,
+    otherAssets: 0,
+    taxInclude: 1,
+    taxMarital: 0,
+    taxAssessOverride: 0,
+    taxSingleParent: 0,
+    taxChildren: 1,
+    taxNewborn: 0,
+    taxParents60: 0,
+    taxParents55: 0,
+    taxParentsLive: 0,
+    taxTvc: 0,
+    taxHomeLoan: 0,
+    taxRent: 0,
+    taxSelfEdu: 0,
+    taxElderly: 0,
+    taxDonation: 0,
+    taxReliefCap: 0,
+    policies: [
+      { id: uid(), company: '', type: 'life', cover: 1000000, premium: 600, cashValue: 0 },
+      { id: uid(), company: '', type: 'ci', cover: 500000, premium: 700, cashValue: 0 },
+      { id: uid(), company: '', type: 'vhis', cover: 1000000, premium: 500, cashValue: 0 }
+    ],
+    age: 35,
+    dependents: 1,
+    essentialOverride: 0,
+    retireAge: 65,
+    goals: [
+      { id: uid(), type: 'goalHome', name: '', amount: 800000, year: 2030 },
+      { id: uid(), type: 'goalEdu', name: '', amount: 500000, year: 2035 }
+    ],
+    extraPay: 2000,
+    incomes: [],
+    assets: [],
+    cars: [],
+    expenses: [
+      { id: uid(), name: '交通費', amount: 1200, kind: 'need' }
+    ],
+    subs: [
+      { id: uid(), name: 'Netflix', amount: 88, category: '影音' },
+      { id: uid(), name: 'Gym', amount: 580, category: '健身' }
+    ],
+    debts: [
+      { id: uid(), creditor: 'HSBC Card', type: 'cc', principal: 45000, apr: 32.5, minPay: 1800 },
+      { id: uid(), creditor: 'Personal Loan', type: 'pl', principal: 80000, apr: 8.5, minPay: 2200 }
+    ]
+  };
+
+  function uid() {
+    return 'id_' + Math.random().toString(36).slice(2, 10);
+  }
+
+  function t(key) {
+    return (I18N[lang] && I18N[lang][key]) || I18N['zh-HK'][key] || key;
+  }
+
+  function money(n) {
+    const v = Number(n) || 0;
+    const abs = Math.abs(v);
+    const s = abs.toLocaleString(lang === 'en' ? 'en-HK' : 'zh-HK', {
+      maximumFractionDigits: 0
+    });
+    return (v < 0 ? '-' : '') + 'HKD ' + s;
+  }
+
+  function pct(n, digits) {
+    const d = digits == null ? 1 : digits;
+    return (Number(n) || 0).toFixed(d) + '%';
+  }
+
+  function n(v) {
+    const x = parseFloat(v);
+    return Number.isFinite(x) ? x : 0;
+  }
+
+  function applyI18n() {
+    document.documentElement.lang = lang === 'en' ? 'en' : 'zh-HK';
+    document.querySelectorAll('[data-i18n]').forEach(function (el) {
+      const key = el.getAttribute('data-i18n');
+      el.textContent = t(key);
+    });
+    document.querySelectorAll('[data-i18n-placeholder]').forEach(function (el) {
+      el.setAttribute('placeholder', t(el.getAttribute('data-i18n-placeholder')));
+    });
+    document.getElementById('btnZh').classList.toggle('active', lang === 'zh-HK');
+    document.getElementById('btnEn').classList.toggle('active', lang === 'en');
+    renderIncomes();
+    renderAssets();
+    renderCars();
+    renderPolicies();
+    renderGoals();
+    renderExpenses();
+    renderSubs();
+    renderDebts();
+    recalculate();
+  }
+
+  function readScalarInputs() {
+    document.querySelectorAll('[data-key]').forEach(function (el) {
+      const key = el.getAttribute('data-key');
+      if (key === 'essentialOverride' && essentialManual) {
+        state.essentialOverride = n(el.value);
+        return;
+      }
+      if (key !== 'essentialOverride') {
+        state[key] = n(el.value);
+      }
+    });
+    state.extraPay = n(document.getElementById('extraPay').value);
+  }
+
+  function sumExpenses(kind) {
+    return state.expenses.reduce(function (s, x) {
+      return x.kind === kind ? s + n(x.amount) : s;
+    }, 0);
+  }
+
+  function carTotals() {
+    var tot = { need: 0, want: 0, value: 0 };
+    state.cars.forEach(function (c) {
+      var monthly = n(c.parking) + n(c.fuel) + n(c.tolls) + (n(c.insurance) + n(c.license) + n(c.maint)) / 12;
+      tot[c.usage === 'want' ? 'want' : 'need'] += monthly;
+      tot.value += n(c.value);
+    });
+    tot.monthly = tot.need + tot.want;
+    return tot;
+  }
+
+  function insuranceTotals() {
+    var tot = { life: 0, ci: 0, med: 0, premium: 0, savingsPremium: 0, cash: 0, vhisDeduction: 0, qdapAnnual: 0 };
+    state.policies.forEach(function (p) {
+      var cover = n(p.cover);
+      var prem = n(p.premium);
+      tot.premium += prem;
+      tot.cash += n(p.cashValue);
+      if (p.type === 'life') tot.life += cover;
+      if (p.type === 'ci') tot.ci += cover;
+      if (p.type === 'med' || p.type === 'vhis') tot.med += cover;
+      if (p.type === 'savings' || p.type === 'qdap') tot.savingsPremium += prem;
+      // VHIS deduction cap is per insured person; one policy is treated as one insured person
+      if (p.type === 'vhis') tot.vhisDeduction += Math.min(prem * 12, 8000);
+      if (p.type === 'qdap') tot.qdapAnnual += prem * 12;
+    });
+    tot.protectionPremium = tot.premium - tot.savingsPremium;
+    return tot;
+  }
+
+  // Monthly net pay is treated as after the 5% employee MPF contribution (relevant income HKD 7,100–30,000, cap HKD 1,500)
+  function grossFromNet(net) {
+    if (net <= 0) return { gross: 0, mpf: 0 };
+    if (net < 7100) return { gross: net, mpf: 0 };
+    if (net / 0.95 <= 30000) return { gross: net / 0.95, mpf: net / 0.95 - net };
+    return { gross: net + 1500, mpf: 1500 };
+  }
+
+  function progressiveTax(nci) {
+    var bands = [0.02, 0.06, 0.10, 0.14];
+    var tax = 0;
+    var left = Math.max(0, nci);
+    for (var i = 0; i < bands.length && left > 0; i++) {
+      var chunk = Math.min(left, 50000);
+      tax += chunk * bands[i];
+      left -= chunk;
+    }
+    return tax + left * 0.17;
+  }
+
+  function standardTax(netIncome) {
+    var x = Math.max(0, netIncome);
+    return x <= 5000000 ? x * 0.15 : 750000 + (x - 5000000) * 0.16;
+  }
+
+  function calcSalariesTax(ins) {
+    var g = grossFromNet(state.salary);
+    var autoAssess = g.gross * 12 + state.bonusAnnual + state.sideIncome * 12;
+    var assessable = state.taxAssessOverride > 0 ? state.taxAssessOverride : autoAssess;
+    var hasKids = state.taxChildren > 0;
+    var housingCap = hasKids ? 120000 : 100000;
+
+    var mpfDed = Math.min(18000, g.mpf * 12);
+    var ded = mpfDed +
+      Math.min(60000, state.taxTvc + ins.qdapAnnual) +
+      ins.vhisDeduction +
+      Math.min(housingCap, state.taxHomeLoan + state.taxRent) +
+      Math.min(100000, state.taxSelfEdu) +
+      Math.min(100000, state.taxElderly);
+    ded = Math.min(ded, assessable);
+    var donation = Math.min(state.taxDonation, (assessable - ded) * 0.35);
+    ded += Math.max(0, donation);
+    var netIncome = Math.max(0, assessable - ded);
+
+    var parentMult = state.taxParentsLive ? 2 : 1;
+    var allowances =
+      (state.taxMarital === 1 ? 264000 : 132000) +
+      (state.taxSingleParent && state.taxMarital === 0 ? 132000 : 0) +
+      130000 * state.taxChildren +
+      130000 * Math.min(state.taxNewborn, state.taxChildren) +
+      50000 * parentMult * state.taxParents60 +
+      25000 * parentMult * state.taxParents55;
+
+    var nci = Math.max(0, netIncome - allowances);
+    var prog = progressiveTax(nci);
+    var std = standardTax(netIncome);
+    var tax = Math.min(prog, std);
+    var relief = Math.min(tax, state.taxReliefCap);
+    var finalTax = Math.max(0, tax - relief);
+
+    return {
+      assessable: assessable,
+      deductions: ded,
+      mpfDed: mpfDed,
+      allowances: allowances,
+      nci: nci,
+      progressive: prog,
+      standard: std,
+      method: prog <= std ? 'prog' : 'std',
+      relief: relief,
+      annual: finalTax,
+      monthly: finalTax / 12,
+      effective: assessable > 0 ? (finalTax / assessable) * 100 : 0
+    };
+  }
+
+  function autoEssential(monthlyTax) {
+    const subs = state.subs.reduce(function (s, x) { return s + n(x.amount); }, 0);
+    // Essentials: housing, utilities, groceries, telecom (base), debt mins, insurance, tax
+    const debtMin = state.debts.reduce(function (s, d) { return s + n(d.minPay); }, 0);
+    return state.rent + state.mgmt + state.utilities + state.telecom + state.groceries + debtMin + insuranceTotals().protectionPremium + Math.min(subs, 200) + sumExpenses('need') + carTotals().need + monthlyTax;
+  }
+
+  function syncEssentialField(computed) {
+    const el = document.getElementById('essentialInput');
+    if (!essentialManual) {
+      state.essentialOverride = computed;
+      el.value = Math.round(computed);
+    }
+  }
+
+  // —— Payoff simulation ——
+  function cloneDebts(debts) {
+    return debts.map(function (d) {
+      return {
+        creditor: d.creditor,
+        type: d.type,
+        principal: Math.max(0, n(d.principal)),
+        apr: Math.max(0, n(d.apr)),
+        minPay: Math.max(0, n(d.minPay))
+      };
+    }).filter(function (d) { return d.principal > 0; });
+  }
+
+  function simulatePayoff(debtsIn, extraMonthly, mode) {
+    var debts = cloneDebts(debtsIn);
+    if (!debts.length) {
+      return { months: 0, interest: 0, series: [0], label: mode };
+    }
+    var months = 0;
+    var interest = 0;
+    var series = [];
+    var totalStart = debts.reduce(function (s, d) { return s + d.principal; }, 0);
+    series.push(totalStart);
+    var MAX = 480; // 40 years
+
+    while (months < MAX) {
+      debts = debts.filter(function (d) { return d.principal > 0.5; });
+      if (!debts.length) break;
+
+      // interest accrual
+      debts.forEach(function (d) {
+        var mInt = d.principal * (d.apr / 100) / 12;
+        d.principal += mInt;
+        interest += mInt;
+      });
+
+      // sort target
+      if (mode === 'snowball') {
+        debts.sort(function (a, b) { return a.principal - b.principal; });
+      } else {
+        debts.sort(function (a, b) { return b.apr - a.apr; });
+      }
+
+      var budget = debts.reduce(function (s, d) { return s + d.minPay; }, 0) + Math.max(0, extraMonthly);
+      // pay minimums first
+      debts.forEach(function (d) {
+        var pay = Math.min(d.principal, d.minPay);
+        d.principal -= pay;
+        budget -= pay;
+      });
+      // avalanche/snowball extra on first
+      for (var i = 0; i < debts.length && budget > 0; i++) {
+        var p = Math.min(debts[i].principal, budget);
+        debts[i].principal -= p;
+        budget -= p;
+      }
+
+      months++;
+      var left = debts.reduce(function (s, d) { return s + Math.max(0, d.principal); }, 0);
+      series.push(left);
+      if (left < 1) break;
+    }
+
+    return {
+      months: months >= MAX ? null : months,
+      interest: interest,
+      series: series,
+      label: mode
+    };
+  }
+
+  function compute() {
+    readScalarInputs();
+
+    var monthlyBonus = state.bonusAnnual / 12;
+    var otherIncome = state.incomes.reduce(function (s, x) { return s + n(x.amount); }, 0);
+    var income = state.salary + state.sideIncome + monthlyBonus + state.investIncome + otherIncome;
+    var otherNeeds = sumExpenses('need');
+    var otherWants = sumExpenses('want');
+
+    var subTotal = state.subs.reduce(function (s, x) { return s + n(x.amount); }, 0);
+    var debtMinTotal = state.debts.reduce(function (s, d) { return s + n(d.minPay); }, 0);
+    var debtPrincipal = state.debts.reduce(function (s, d) { return s + n(d.principal); }, 0);
+    var weightedAprNum = state.debts.reduce(function (s, d) { return s + n(d.principal) * n(d.apr); }, 0);
+    var wapr = debtPrincipal > 0 ? weightedAprNum / debtPrincipal : 0;
+
+    var ins = insuranceTotals();
+    var car = carTotals();
+    var tax = calcSalariesTax(ins);
+    var monthlyTax = state.taxInclude ? tax.monthly : 0;
+
+    var fixedLiving = state.rent + state.mgmt + state.utilities + state.telecom + state.groceries + state.dining + otherNeeds + otherWants + car.monthly;
+    var expenses = fixedLiving + subTotal + debtMinTotal + ins.premium + monthlyTax;
+    var surplus = income - expenses;
+    var saveRate = income > 0 ? ((surplus + ins.savingsPremium) / income) * 100 : 0;
+    var dti = income > 0 ? (debtMinTotal / income) * 100 : 0;
+
+    var essentialAuto = autoEssential(monthlyTax);
+    syncEssentialField(essentialAuto);
+    var essential = Math.max(0, essentialManual ? state.essentialOverride : essentialAuto);
+
+    // 50/30/20
+    var needsAmt = state.rent + state.mgmt + state.utilities + state.telecom + state.groceries + debtMinTotal + ins.protectionPremium + otherNeeds + car.need + monthlyTax;
+    var wantsAmt = state.dining + subTotal + otherWants + car.want;
+    var saveAmt = Math.max(0, surplus) + ins.savingsPremium;
+    var needsPct = income > 0 ? (needsAmt / income) * 100 : 0;
+    var wantsPct = income > 0 ? (wantsAmt / income) * 100 : 0;
+    var savePct = income > 0 ? (saveAmt / income) * 100 : 0;
+
+    // Emergency
+    var emergLow = essential * 3;
+    var emergHigh = essential * 6;
+    var emergMonths = essential > 0 ? state.cash / essential : 0;
+    var emergGap = Math.max(0, emergLow - state.cash);
+
+    // Assets / NW
+    var extraAssets = state.assets.reduce(function (s, x) { return s + n(x.value); }, 0);
+    var assets = state.cash + state.mpf + state.investAssets + state.otherAssets + extraAssets + ins.cash + car.value;
+    var netWorth = assets - debtPrincipal;
+
+    state.dependents = state.taxChildren + state.taxParents60 + state.taxParents55 + (state.taxMarital === 1 ? 1 : 0);
+    // Protection gap: 10x annual income + dependents need (annual income * 0.5 per dependent) - cover
+    var annualIncome = income * 12;
+    var suggestedLife = annualIncome * 10 + state.dependents * annualIncome * 0.5;
+    var protGap = Math.max(0, suggestedLife - ins.life);
+
+    // Retirement @ 3% real return
+    var yearsToRetire = Math.max(0, state.retireAge - state.age);
+    var monthlyInvest = Math.max(0, surplus) + (debtPrincipal <= 0 ? state.extraPay : Math.max(0, state.extraPay * 0.3));
+    // Base investable: surplus (if positive). Extra slider partly to retirement when modeled in what-if separately.
+    var r = 0.03 / 12;
+    var nestEggNow = state.cash + state.mpf + state.investAssets + ins.cash + (state.otherAssets + extraAssets) * 0.5;
+    var monthsR = yearsToRetire * 12;
+    var futureLump = nestEggNow * Math.pow(1 + 0.03, yearsToRetire);
+    var futureAnnuity = 0;
+    if (r > 0 && monthsR > 0) {
+      futureAnnuity = Math.max(0, surplus) * ((Math.pow(1 + r, monthsR) - 1) / r);
+    }
+    var retireProj = futureLump + futureAnnuity;
+    var retireNeed = (income * 0.7) * 12 * 20; // 70% income × 20 years
+    var retireGap = Math.max(0, retireNeed - retireProj);
+
+    // Goals
+    var goals = state.goals.map(function (g) {
+      var amt = n(g.amount);
+      var year = n(g.year);
+      var months = Math.max(1, Math.max(0, year - CURRENT_YEAR) * 12);
+      return {
+        label: (g.name && g.name.trim()) ? g.name.trim() : t(g.type),
+        amt: amt,
+        year: year,
+        monthlyNeed: amt > 0 ? amt / months : 0
+      };
+    }).sort(function (a, b) { return a.year - b.year; });
+    var goalRunning = 0;
+    goals.forEach(function (g) {
+      goalRunning += g.monthlyNeed;
+      g.ok = g.amt <= 0 || surplus >= goalRunning;
+    });
+
+    // Payoff strategies
+    var snow = simulatePayoff(state.debts, state.extraPay, 'snowball');
+    var ava = simulatePayoff(state.debts, state.extraPay, 'avalanche');
+    var slowerInt = Math.max(snow.interest, ava.interest);
+    var fasterInt = Math.min(snow.interest, ava.interest);
+    var interestSaved = Math.max(0, slowerInt - fasterInt);
+
+    // High APR CC warning
+    var highCc = state.debts.some(function (d) {
+      return d.type === 'cc' && n(d.apr) > 30 && n(d.principal) > 0;
+    });
+
+    // Health score dimensions 0-20 each => 100
+    var sSave = saveRate >= 20 ? 20 : saveRate >= 10 ? 14 : saveRate >= 0 ? 8 : 2;
+    var sEmerg = emergMonths >= 6 ? 20 : emergMonths >= 3 ? 14 : emergMonths >= 1 ? 8 : 3;
+    var sDebt = dti <= 20 ? 20 : dti <= 36 ? 12 : dti <= 50 ? 6 : 2;
+    var sGap = protGap <= 0 ? 20 : protGap < annualIncome * 2 ? 12 : protGap < annualIncome * 5 ? 7 : 3;
+    var retireRatio = retireNeed > 0 ? retireProj / retireNeed : 1;
+    var sRetire = retireRatio >= 1 ? 20 : retireRatio >= 0.7 ? 14 : retireRatio >= 0.4 ? 8 : 3;
+    var score = Math.round(sSave + sEmerg + sDebt + sGap + sRetire);
+
+    // Actions
+    var actions = [];
+    if (highCc || (wapr > 20 && debtPrincipal > 0)) {
+      var topDebt = cloneDebts(state.debts).sort(function (a, b) { return b.apr - a.apr; })[0];
+      actions.push({
+        p: 1,
+        title: t('actDebt'),
+        desc: t('actDebtDesc'),
+        amount: topDebt ? topDebt.principal : debtPrincipal
+      });
+    }
+    if (emergMonths < 3) {
+      actions.push({
+        p: 1,
+        title: t('actEmerg'),
+        desc: t('actEmergDesc'),
+        amount: emergGap
+      });
+    } else if (emergMonths < 6) {
+      actions.push({
+        p: 2,
+        title: t('actEmerg'),
+        desc: t('actEmergDesc'),
+        amount: Math.max(0, emergHigh - state.cash)
+      });
+    }
+    if (protGap > 0) {
+      actions.push({
+        p: 2,
+        title: t('actGap'),
+        desc: t('actGapDesc'),
+        amount: protGap
+      });
+    }
+    if (subTotal * 12 > income * 12 * 0.03 && subTotal > 0) {
+      actions.push({
+        p: 3,
+        title: t('actSub'),
+        desc: t('actSubDesc'),
+        amount: subTotal * 12
+      });
+    }
+    if (surplus < 0 || saveRate < 10) {
+      actions.push({
+        p: 2,
+        title: t('actSave'),
+        desc: t('actSaveDesc'),
+        amount: Math.max(0, income * 0.2 - Math.max(0, surplus))
+      });
+    }
+    if (retireGap > 0 && yearsToRetire > 0) {
+      actions.push({
+        p: 3,
+        title: t('actRetire'),
+        desc: t('actRetireDesc'),
+        amount: retireGap
+      });
+    }
+    var badGoals = goals.filter(function (g) { return g.amt > 0 && !g.ok; });
+    if (badGoals.length) {
+      actions.push({
+        p: 3,
+        title: t('actGoal'),
+        desc: t('actGoalDesc'),
+        amount: badGoals.reduce(function (s, g) { return s + g.monthlyNeed; }, 0)
+      });
+    }
+    if (!actions.length) {
+      actions.push({ p: 4, title: t('actGood'), desc: t('actGoodDesc'), amount: Math.max(0, surplus) });
+    }
+    actions.sort(function (a, b) { return a.p - b.p; });
+
+    // What-if retirement with full extra as savings (after debt model)
+    var extra = state.extraPay;
+    var snowX = simulatePayoff(state.debts, extra, 'snowball');
+    var avaX = simulatePayoff(state.debts, extra, 'avalanche');
+    var saveExtra = Math.max(0, surplus) + extra;
+    var futA = 0;
+    if (r > 0 && monthsR > 0) {
+      futA = saveExtra * ((Math.pow(1 + r, monthsR) - 1) / r);
+    }
+    var retireWhatIf = futureLump + futA;
+
+    return {
+      income: income,
+      expenses: expenses,
+      surplus: surplus,
+      saveRate: saveRate,
+      dti: dti,
+      subTotal: subTotal,
+      subAnnual: subTotal * 12,
+      debtPrincipal: debtPrincipal,
+      debtMinTotal: debtMinTotal,
+      wapr: wapr,
+      essential: essential,
+      needsAmt: needsAmt,
+      wantsAmt: wantsAmt,
+      saveAmt: saveAmt,
+      needsPct: needsPct,
+      wantsPct: wantsPct,
+      savePct: savePct,
+      emergLow: emergLow,
+      emergHigh: emergHigh,
+      emergMonths: emergMonths,
+      emergGap: emergGap,
+      assets: assets,
+      netWorth: netWorth,
+      suggestedLife: suggestedLife,
+      protGap: protGap,
+      yearsToRetire: yearsToRetire,
+      retireProj: retireProj,
+      retireNeed: retireNeed,
+      retireGap: retireGap,
+      retireWhatIf: retireWhatIf,
+      goals: goals,
+      tax: tax,
+      ins: ins,
+      car: car,
+      snow: snow,
+      ava: ava,
+      snowX: snowX,
+      avaX: avaX,
+      interestSaved: interestSaved,
+      highCc: highCc,
+      score: score,
+      dims: [
+        { key: 'dimSave', v: sSave, max: 20 },
+        { key: 'dimEmerg', v: sEmerg, max: 20 },
+        { key: 'dimDebt', v: sDebt, max: 20 },
+        { key: 'dimGap', v: sGap, max: 20 },
+        { key: 'dimRetire', v: sRetire, max: 20 }
+      ],
+      actions: actions,
+      expenseParts: [
+        { name: t('rent'), value: state.rent },
+        { name: t('mgmt'), value: state.mgmt },
+        { name: t('utilities'), value: state.utilities },
+        { name: t('telecom'), value: state.telecom },
+        { name: t('groceries'), value: state.groceries },
+        { name: t('dining'), value: state.dining },
+        { name: t('secSubs'), value: subTotal },
+        { name: t('secDebt'), value: debtMinTotal },
+        { name: t('premium'), value: ins.protectionPremium },
+        { name: t('savingsPremium'), value: ins.savingsPremium },
+        { name: t('taxLine'), value: monthlyTax },
+        { name: t('carLine'), value: car.monthly },
+        { name: t('otherNeeds'), value: otherNeeds },
+        { name: t('otherWants'), value: otherWants }
+      ]
+    };
+  }
+
+  function statusClass(kind, value) {
+    if (kind === 'surplus') {
+      if (value >= 0 && value / Math.max(1, state.salary) >= 0.1) return 'ok';
+      if (value >= 0) return 'warn';
+      return 'danger';
+    }
+    if (kind === 'save') {
+      if (value >= 20) return 'ok';
+      if (value >= 10) return 'warn';
+      return 'danger';
+    }
+    if (kind === 'emerg') {
+      if (value >= 6) return 'ok';
+      if (value >= 3) return 'warn';
+      return 'danger';
+    }
+    if (kind === 'dti') {
+      if (value <= 20) return 'ok';
+      if (value <= 36) return 'warn';
+      return 'danger';
+    }
+    return '';
+  }
+
+  function statusText(cls) {
+    if (cls === 'ok') return t('statusOk');
+    if (cls === 'warn') return t('statusWarn');
+    return t('statusBad');
+  }
+
+  function fmtMonths(m) {
+    if (m == null) return t('forever');
+    if (m < 12) return m + ' ' + t('months');
+    var y = Math.floor(m / 12);
+    var r = m % 12;
+    return y + ' ' + t('years') + (r ? (' ' + r + ' ' + t('months')) : '');
+  }
+
+  function renderKPIs(r) {
+    var items = [
+      {
+        label: t('kpiSurplus'),
+        value: r.surplus < 0 ? money(r.surplus) + ' (' + t('deficit') + ')' : money(r.surplus),
+        cls: statusClass('surplus', r.surplus),
+        sub: statusText(statusClass('surplus', r.surplus))
+      },
+      {
+        label: t('kpiSaveRate'),
+        value: pct(r.saveRate),
+        cls: statusClass('save', r.saveRate),
+        sub: statusText(statusClass('save', r.saveRate))
+      },
+      {
+        label: t('kpiEmergency'),
+        value: r.emergMonths.toFixed(1) + ' ' + t('monthsShort'),
+        cls: statusClass('emerg', r.emergMonths),
+        sub: statusText(statusClass('emerg', r.emergMonths))
+      },
+      {
+        label: t('kpiDti'),
+        value: pct(r.dti),
+        cls: statusClass('dti', r.dti),
+        sub: statusText(statusClass('dti', r.dti))
+      }
+    ];
+    document.getElementById('kpiGrid').innerHTML = items.map(function (it) {
+      return '<div class="kpi ' + it.cls + '"><div class="label">' + it.label + '</div><div class="value">' + it.value + '</div><div class="sub">' + it.sub + '</div></div>';
+    }).join('');
+  }
+
+  function renderScore(r) {
+    document.getElementById('scoreDims').innerHTML = r.dims.map(function (d) {
+      var pctW = Math.round((d.v / d.max) * 100);
+      return '<div class="dim-row"><span>' + t(d.key) + '</span><span>' + d.v + '/' + d.max + '</span><div class="bar"><i style="width:' + pctW + '%"></i></div></div>';
+    }).join('');
+
+    if (!gaugeChart) {
+      gaugeChart = echarts.init(document.getElementById('gaugeChart'));
+    }
+    var color = r.score >= 75 ? CHART.green : r.score >= 50 ? CHART.amber : CHART.burgundy;
+    gaugeChart.setOption({
+      series: [{
+        type: 'gauge',
+        startAngle: 200,
+        endAngle: -20,
+        min: 0,
+        max: 100,
+        radius: '95%',
+        center: ['50%', '65%'],
+        axisLine: {
+          lineStyle: {
+            width: 12,
+            color: [[0.4, CHART.burgundy], [0.7, CHART.amber], [1, CHART.green]]
+          }
+        },
+        pointer: { itemStyle: { color: color } },
+        axisTick: { show: false },
+        splitLine: { show: false },
+        axisLabel: { show: false },
+        detail: {
+          valueAnimation: true,
+          formatter: '{value} ' + t('scoreUnit'),
+          fontSize: 16,
+          fontWeight: 700,
+          color: varInk(),
+          offsetCenter: [0, '30%']
+        },
+        data: [{ value: r.score }]
+      }]
+    }, true);
+  }
+
+  function varInk() { return CHART.navy; }
+
+  function renderMetrics(r) {
+    var rows = [
+      [t('mIncome'), money(r.income)],
+      [t('mExpense'), money(r.expenses)],
+      [t('mNetWorth'), money(r.netWorth)],
+      [t('taxAnnual'), money(r.tax.annual) + ' · ' + t('taxMonthly') + ' ' + money(r.tax.monthly)],
+      [t('mProtGap'), money(r.protGap)],
+      [t('mRetireNeed'), money(r.retireNeed)],
+      [t('mRetireProj'), money(r.retireProj)],
+      [t('mRetireGap'), money(r.retireGap)],
+      [t('mSnowball'), fmtMonths(r.snow.months) + ' · ' + t('interest') + ' ' + money(r.snow.interest)],
+      [t('mAvalanche'), fmtMonths(r.ava.months) + ' · ' + t('interest') + ' ' + money(r.ava.interest)],
+      [t('saveInterest'), money(r.interestSaved)]
+    ];
+    document.getElementById('metricsGrid').innerHTML = rows.map(function (x) {
+      return '<div class="metric">' + x[0] + '<b>' + x[1] + '</b></div>';
+    }).join('');
+
+    var ruleHtml = '<div class="metric"><b>' + t('rule502030') + '</b></div>';
+    ruleHtml += metricRule(t('needs'), r.needsAmt, r.needsPct, 50);
+    ruleHtml += metricRule(t('wants'), r.wantsAmt, r.wantsPct, 30);
+    ruleHtml += metricRule(t('savings'), r.saveAmt, r.savePct, 20);
+    ruleHtml += '<div class="metric">' + t('emergNeed') + '<b>' + money(r.emergLow) + ' – ' + money(r.emergHigh) + '</b></div>';
+    ruleHtml += '<div class="metric">' + t('emergGap') + '<b>' + money(r.emergGap) + '</b></div>';
+    r.goals.forEach(function (g) {
+      if (g.amt <= 0) return;
+      ruleHtml += '<div class="metric">' + esc(g.label) + ' (' + g.year + ')<b>' + t('goalNeed') + ' ' + money(g.monthlyNeed) + ' · ' + (g.ok ? t('goalOk') : t('goalFail')) + '</b></div>';
+    });
+    document.getElementById('ruleGrid').innerHTML = ruleHtml;
+  }
+
+  function metricRule(label, amt, p, limit) {
+    var flag = p > limit + 0.5 ? (' · ' + t('over')) : (' · ' + t('okLabel'));
+    return '<div class="metric">' + label + ' (≤' + limit + '%)' + '<b>' + money(amt) + ' (' + pct(p) + ')' + flag + '</b></div>';
+  }
+
+  function renderActions(r) {
+    document.getElementById('actionsList').innerHTML = r.actions.map(function (a) {
+      return '<li class="action-item p' + a.p + '"><div class="t">' + a.title + '</div><div class="d">' + a.desc + '</div><div class="a">' + money(a.amount) + '</div></li>';
+    }).join('');
+  }
+
+  function renderWhatIf(r) {
+    document.getElementById('extraPayLabel').textContent = money(state.extraPay);
+    var better = (r.avaX.months != null && r.snowX.months != null)
+      ? (r.avaX.interest <= r.snowX.interest ? r.avaX : r.snowX)
+      : (r.avaX.months != null ? r.avaX : r.snowX);
+    var html = '';
+    html += '<div class="mini-stat"><div class="k">' + t('mSnowball') + '</div><div class="v">' + fmtMonths(r.snowX.months) + '</div></div>';
+    html += '<div class="mini-stat"><div class="k">' + t('mAvalanche') + '</div><div class="v">' + fmtMonths(r.avaX.months) + '</div></div>';
+    html += '<div class="mini-stat"><div class="k">' + t('mRetireProj') + '</div><div class="v">' + money(r.retireWhatIf) + '</div></div>';
+    html += '<div class="mini-stat"><div class="k">' + t('retireReady') + '</div><div class="v">' + (r.retireWhatIf >= r.retireNeed ? t('ready') : t('shortfall') + ' ' + money(Math.max(0, r.retireNeed - r.retireWhatIf))) + '</div></div>';
+    document.getElementById('whatifResults').innerHTML = html;
+  }
+
+  function ensureChart(id) {
+    if (!charts[id]) charts[id] = echarts.init(document.getElementById(id));
+    return charts[id];
+  }
+
+  function renderCharts(r) {
+    if (typeof echarts === 'undefined') return;
+
+    var exp = ensureChart('chartExpense');
+    var parts = r.expenseParts.filter(function (p) { return p.value > 0; });
+    exp.setOption({
+      tooltip: { trigger: 'item', formatter: '{b}: HKD {c} ({d}%)' },
+      color: [CHART.navy, CHART.gold, CHART.slate, CHART.teal, CHART.sand, CHART.grey, CHART.burgundy, CHART.green, '#7E8CA3'],
+      series: [{
+        type: 'pie',
+        radius: ['42%', '68%'],
+        itemStyle: { borderRadius: 6, borderColor: '#fff', borderWidth: 2 },
+        label: { fontSize: 11, color: CHART.label },
+        data: parts.map(function (p) { return { name: p.name, value: Math.round(p.value) }; })
+      }]
+    }, true);
+
+    var debtC = ensureChart('chartDebt');
+    var labels = state.debts.map(function (d) { return d.creditor || t('item'); });
+    debtC.setOption({
+      tooltip: { trigger: 'axis' },
+      legend: { data: [t('principalAxis'), t('aprAxis')], bottom: 0, textStyle: { fontSize: 11 } },
+      grid: { left: 50, right: 50, top: 30, bottom: 40 },
+      xAxis: { type: 'category', data: labels.length ? labels : [t('noDebt')], axisLabel: { fontSize: 10 } },
+      yAxis: [
+        { type: 'value', name: t('principalAxis'), axisLabel: { fontSize: 10 } },
+        { type: 'value', name: t('aprAxis'), axisLabel: { formatter: '{value}%', fontSize: 10 } }
+      ],
+      series: [
+        {
+          name: t('principalAxis'),
+          type: 'bar',
+          data: state.debts.map(function (d) { return n(d.principal); }),
+          itemStyle: { color: CHART.navy, borderRadius: [6, 6, 0, 0] }
+        },
+        {
+          name: t('aprAxis'),
+          type: 'line',
+          yAxisIndex: 1,
+          data: state.debts.map(function (d) { return n(d.apr); }),
+          itemStyle: { color: CHART.burgundy },
+          lineStyle: { width: 2 }
+        }
+      ]
+    }, true);
+
+    var pay = ensureChart('chartPayoff');
+    var maxLen = Math.max(r.snow.series.length, r.ava.series.length);
+    var xData = [];
+    for (var i = 0; i < maxLen; i++) xData.push(i);
+    function pad(series) {
+      var out = series.slice();
+      while (out.length < maxLen) out.push(0);
+      return out;
+    }
+    pay.setOption({
+      tooltip: { trigger: 'axis' },
+      legend: { data: [t('snowball'), t('avalanche')], bottom: 0, textStyle: { fontSize: 11 } },
+      grid: { left: 55, right: 20, top: 30, bottom: 40 },
+      xAxis: { type: 'category', data: xData, name: t('months'), axisLabel: { fontSize: 10, interval: Math.max(0, Math.floor(maxLen / 6) - 1) } },
+      yAxis: { type: 'value', name: t('balLeft'), axisLabel: { fontSize: 10 } },
+      series: [
+        { name: t('snowball'), type: 'line', showSymbol: false, data: pad(r.snow.series), itemStyle: { color: CHART.navy }, areaStyle: { color: 'rgba(11,31,58,0.06)' } },
+        { name: t('avalanche'), type: 'line', showSymbol: false, data: pad(r.ava.series), itemStyle: { color: CHART.gold }, areaStyle: { color: 'rgba(184,151,90,0.10)' } }
+      ]
+    }, true);
+
+    var net = ensureChart('chartNet');
+    net.setOption({
+      tooltip: { trigger: 'axis' },
+      grid: { left: 55, right: 20, top: 30, bottom: 30 },
+      xAxis: { type: 'category', data: [t('assets'), t('liabilities'), t('netWorth')] },
+      yAxis: { type: 'value' },
+      series: [{
+        type: 'bar',
+        data: [
+          { value: Math.round(r.assets), itemStyle: { color: CHART.green } },
+          { value: Math.round(r.debtPrincipal), itemStyle: { color: CHART.burgundy } },
+          { value: Math.round(r.netWorth), itemStyle: { color: CHART.navy } }
+        ],
+        barWidth: 42,
+        itemStyle: { borderRadius: [6, 6, 0, 0] },
+        label: { show: true, position: 'top', fontSize: 10, formatter: function (p) { return 'HKD ' + Number(p.value).toLocaleString(); } }
+      }]
+    }, true);
+  }
+
+  function renderSubsMeta(r) {
+    document.getElementById('subsSummary').textContent =
+      t('subTotal') + '：' + money(r.subTotal) + ' · ' + t('subAnnual') + '：' + money(r.subAnnual);
+    var tip = document.getElementById('subsTip');
+    var heavy = r.income > 0 && r.subAnnual > r.income * 12 * 0.03;
+    tip.className = 'alert ' + (heavy ? 'alert-warn' : 'alert-ok');
+    tip.textContent = heavy ? t('subTip') : t('subTipOk');
+  }
+
+  function renderDebtMeta(r) {
+    document.getElementById('debtSummary').textContent =
+      t('debtTotal') + '：' + money(r.debtPrincipal) + ' · ' +
+      t('debtWapr') + '：' + pct(r.wapr) + ' · ' +
+      t('debtDti') + '：' + pct(r.dti);
+    var w = document.getElementById('ccWarning');
+    if (r.highCc) {
+      w.hidden = false;
+      w.textContent = t('ccWarn');
+    } else {
+      w.hidden = true;
+    }
+  }
+
+  function renderTaxMeta(r) {
+    var x = r.tax;
+    var rows = [
+      [t('taxAssessable'), money(x.assessable)],
+      [t('taxDeductions'), money(x.deductions) + ' (' + t('taxMpfDed') + ' ' + money(x.mpfDed) + ')'],
+      [t('taxAllowances'), money(x.allowances)],
+      [t('taxNci'), money(x.nci)],
+      [t('taxProgressive'), money(x.progressive)],
+      [t('taxStandard'), money(x.standard)]
+    ];
+    if (x.relief > 0) rows.push([t('taxRelief'), '-' + money(x.relief)]);
+    document.getElementById('taxResult').innerHTML =
+      rows.map(function (row) { return row[0] + '：' + row[1]; }).join('<br>') +
+      '<br><b>' + t('taxAnnual') + '：' + money(x.annual) + '</b> (' + (x.method === 'prog' ? t('taxMethodProg') : t('taxMethodStd')) + ')' +
+      '<br><b>' + t('taxMonthly') + '：' + money(x.monthly) + '</b> · ' + t('taxEffective') + ' ' + pct(x.effective);
+  }
+
+  function renderInsMeta(r) {
+    var i = r.ins;
+    document.getElementById('insSummary').textContent = t('insTotals')
+      .replace('{life}', money(i.life))
+      .replace('{ci}', money(i.ci))
+      .replace('{med}', money(i.med))
+      .replace('{prem}', money(i.premium))
+      .replace('{save}', money(i.savingsPremium))
+      .replace('{cash}', money(i.cash));
+  }
+
+  function renderDependents() {
+    document.getElementById('dependentsNote').textContent = t('dependentsTpl').replace('{n}', state.dependents);
+  }
+
+  function renderCarMeta(r) {
+    document.getElementById('carSummary').textContent = state.cars.length ? t('carSummaryTpl')
+      .replace('{m}', money(r.car.monthly))
+      .replace('{y}', money(r.car.monthly * 12))
+      .replace('{v}', money(r.car.value)) : '';
+  }
+
+  function recalculate() {
+    var r = compute();
+    renderDependents();
+    renderCarMeta(r);
+    renderTaxMeta(r);
+    renderInsMeta(r);
+    renderKPIs(r);
+    renderScore(r);
+    renderMetrics(r);
+    renderActions(r);
+    renderWhatIf(r);
+    renderCharts(r);
+    renderSubsMeta(r);
+    renderDebtMeta(r);
+  }
+
+  function renderIncomes() {
+    var root = document.getElementById('incomeList');
+    root.innerHTML = '';
+    state.incomes.forEach(function (it, idx) {
+      var card = document.createElement('div');
+      card.className = 'dyn-card';
+      card.innerHTML =
+        '<div class="dyn-card-head"><span class="dyn-card-title">' + t('extraIncomeTitle') + ' ' + (idx + 1) + '</span>' +
+        '<button type="button" class="btn btn-danger btn-sm" data-rm-income="' + it.id + '">' + t('remove') + '</button></div>' +
+        '<div class="grid-2">' +
+        '<label class="field"><span>' + t('itemName') + '</span><input type="text" data-income="name" data-id="' + it.id + '" value="' + esc(it.name) + '" placeholder="' + esc(t('incomePlaceholder')) + '" /></label>' +
+        '<label class="field"><span>' + t('monthlyAmt') + '</span><input type="number" min="0" step="100" data-income="amount" data-id="' + it.id + '" value="' + n(it.amount) + '" /></label>' +
+        '</div>';
+      root.appendChild(card);
+    });
+  }
+
+  function renderCars() {
+    var root = document.getElementById('carList');
+    root.innerHTML = '';
+    function num(c, field, step) {
+      return '<label class="field"><span>' + t('car' + field.charAt(0).toUpperCase() + field.slice(1)) + '</span><input type="number" min="0" step="' + step + '" data-car="' + field + '" data-id="' + c.id + '" value="' + n(c[field]) + '" /></label>';
+    }
+    state.cars.forEach(function (c, idx) {
+      var opts = ['need', 'want'].map(function (k) {
+        return '<option value="' + k + '"' + (c.usage === k ? ' selected' : '') + '>' + t('carUse_' + k) + '</option>';
+      }).join('');
+      var card = document.createElement('div');
+      card.className = 'dyn-card';
+      card.innerHTML =
+        '<div class="dyn-card-head"><span class="dyn-card-title">' + t('carTitle') + ' ' + (idx + 1) + '</span>' +
+        '<button type="button" class="btn btn-danger btn-sm" data-rm-car="' + c.id + '">' + t('remove') + '</button></div>' +
+        '<div class="grid-2">' +
+        '<label class="field"><span>' + t('carName') + '</span><input type="text" data-car="name" data-id="' + c.id + '" value="' + esc(c.name) + '" placeholder="' + esc(t('carNamePlaceholder')) + '" /></label>' +
+        '<label class="field"><span>' + t('carUsage') + '</span><select data-car="usage" data-id="' + c.id + '">' + opts + '</select></label>' +
+        num(c, 'parking', 100) + num(c, 'fuel', 100) + num(c, 'tolls', 50) +
+        num(c, 'insurance', 500) + num(c, 'license', 100) + num(c, 'maint', 500) + num(c, 'value', 10000) +
+        '</div>';
+      root.appendChild(card);
+    });
+  }
+
+  function renderPolicies() {
+    var root = document.getElementById('policyList');
+    root.innerHTML = '';
+    var types = ['life', 'ci', 'med', 'vhis', 'savings', 'qdap', 'accident', 'other'];
+    state.policies.forEach(function (p, idx) {
+      var opts = types.map(function (k) {
+        return '<option value="' + k + '"' + (p.type === k ? ' selected' : '') + '>' + t('pt_' + k) + '</option>';
+      }).join('');
+      var card = document.createElement('div');
+      card.className = 'dyn-card';
+      card.innerHTML =
+        '<div class="dyn-card-head"><span class="dyn-card-title">' + t('policyTitle') + ' ' + (idx + 1) + '</span>' +
+        '<button type="button" class="btn btn-danger btn-sm" data-rm-policy="' + p.id + '">' + t('remove') + '</button></div>' +
+        '<div class="grid-2">' +
+        '<label class="field"><span>' + t('policyCompany') + '</span><input type="text" data-policy="company" data-id="' + p.id + '" value="' + esc(p.company) + '" placeholder="' + esc(t('companyPlaceholder')) + '" /></label>' +
+        '<label class="field"><span>' + t('policyType') + '</span><select data-policy="type" data-id="' + p.id + '">' + opts + '</select></label>' +
+        '<label class="field"><span>' + t('policyCover') + '</span><input type="number" min="0" step="10000" data-policy="cover" data-id="' + p.id + '" value="' + n(p.cover) + '" /></label>' +
+        '<label class="field"><span>' + t('policyPremium') + '</span><input type="number" min="0" step="50" data-policy="premium" data-id="' + p.id + '" value="' + n(p.premium) + '" /></label>' +
+        '<label class="field" style="grid-column:1/-1"><span>' + t('policyCash') + '</span><input type="number" min="0" step="1000" data-policy="cashValue" data-id="' + p.id + '" value="' + n(p.cashValue) + '" /></label>' +
+        '</div>';
+      root.appendChild(card);
+    });
+  }
+
+  function renderGoals() {
+    var root = document.getElementById('goalList');
+    root.innerHTML = '';
+    state.goals.forEach(function (g, idx) {
+      var opts = ['goalHome', 'goalEdu', 'goalWed', 'goalOther'].map(function (k) {
+        return '<option value="' + k + '"' + (g.type === k ? ' selected' : '') + '>' + t(k) + '</option>';
+      }).join('');
+      var card = document.createElement('div');
+      card.className = 'dyn-card';
+      card.innerHTML =
+        '<div class="dyn-card-head"><span class="dyn-card-title">' + t('goalTitle') + ' ' + (idx + 1) + '</span>' +
+        '<button type="button" class="btn btn-danger btn-sm" data-rm-goal="' + g.id + '">' + t('remove') + '</button></div>' +
+        '<div class="grid-2">' +
+        '<label class="field"><span>' + t('goalType') + '</span><select data-goal="type" data-id="' + g.id + '">' + opts + '</select></label>' +
+        '<label class="field"><span>' + t('goalName') + '</span><input type="text" data-goal="name" data-id="' + g.id + '" value="' + esc(g.name) + '" placeholder="' + esc(t('goalNamePlaceholder')) + '" /></label>' +
+        '<label class="field"><span>' + t('goalAmt') + '</span><input type="number" min="0" step="10000" data-goal="amount" data-id="' + g.id + '" value="' + n(g.amount) + '" /></label>' +
+        '<label class="field"><span>' + t('goalYear') + '</span><input type="number" min="' + CURRENT_YEAR + '" max="2100" step="1" data-goal="year" data-id="' + g.id + '" value="' + n(g.year) + '" /></label>' +
+        '</div>';
+      root.appendChild(card);
+    });
+  }
+
+  function renderAssets() {
+    var root = document.getElementById('assetList');
+    root.innerHTML = '';
+    state.assets.forEach(function (it, idx) {
+      var card = document.createElement('div');
+      card.className = 'dyn-card';
+      card.innerHTML =
+        '<div class="dyn-card-head"><span class="dyn-card-title">' + t('extraAssetTitle') + ' ' + (idx + 1) + '</span>' +
+        '<button type="button" class="btn btn-danger btn-sm" data-rm-asset="' + it.id + '">' + t('remove') + '</button></div>' +
+        '<div class="grid-2">' +
+        '<label class="field"><span>' + t('itemName') + '</span><input type="text" data-asset="name" data-id="' + it.id + '" value="' + esc(it.name) + '" placeholder="' + esc(t('assetPlaceholder')) + '" /></label>' +
+        '<label class="field"><span>' + t('assetValue') + '</span><input type="number" min="0" step="1000" data-asset="value" data-id="' + it.id + '" value="' + n(it.value) + '" /></label>' +
+        '</div>';
+      root.appendChild(card);
+    });
+  }
+
+  function renderExpenses() {
+    var root = document.getElementById('expenseList');
+    root.innerHTML = '';
+    state.expenses.forEach(function (it, idx) {
+      var opts = ['need', 'want'].map(function (k) {
+        return '<option value="' + k + '"' + (it.kind === k ? ' selected' : '') + '>' + t('kind_' + k) + '</option>';
+      }).join('');
+      var card = document.createElement('div');
+      card.className = 'dyn-card';
+      card.innerHTML =
+        '<div class="dyn-card-head"><span class="dyn-card-title">' + t('extraExpenseTitle') + ' ' + (idx + 1) + '</span>' +
+        '<button type="button" class="btn btn-danger btn-sm" data-rm-expense="' + it.id + '">' + t('remove') + '</button></div>' +
+        '<div class="grid-2">' +
+        '<label class="field"><span>' + t('itemName') + '</span><input type="text" data-expense="name" data-id="' + it.id + '" value="' + esc(it.name) + '" placeholder="' + esc(t('expensePlaceholder')) + '" /></label>' +
+        '<label class="field"><span>' + t('monthlyAmt') + '</span><input type="number" min="0" step="50" data-expense="amount" data-id="' + it.id + '" value="' + n(it.amount) + '" /></label>' +
+        '<label class="field" style="grid-column:1/-1"><span>' + t('expenseKind') + '</span><select data-expense="kind" data-id="' + it.id + '">' + opts + '</select></label>' +
+        '</div>';
+      root.appendChild(card);
+    });
+  }
+
+  function renderSubs() {
+    var root = document.getElementById('subsList');
+    root.innerHTML = '';
+    state.subs.forEach(function (s, idx) {
+      var card = document.createElement('div');
+      card.className = 'dyn-card';
+      card.innerHTML =
+        '<div class="dyn-card-head"><span class="dyn-card-title">' + t('item') + ' ' + (idx + 1) + '</span>' +
+        '<button type="button" class="btn btn-danger btn-sm" data-rm-sub="' + s.id + '">' + t('remove') + '</button></div>' +
+        '<div class="grid-2">' +
+        '<label class="field"><span>' + t('subName') + '</span><input type="text" data-sub="name" data-id="' + s.id + '" value="' + esc(s.name) + '" placeholder="' + esc(t('subPlaceholder')) + '" /></label>' +
+        '<label class="field"><span>' + t('subAmt') + '</span><input type="number" min="0" step="10" data-sub="amount" data-id="' + s.id + '" value="' + n(s.amount) + '" /></label>' +
+        '<label class="field" style="grid-column:1/-1"><span>' + t('subCat') + '</span><input type="text" data-sub="category" data-id="' + s.id + '" value="' + esc(s.category) + '" placeholder="' + esc(t('catPlaceholder')) + '" /></label>' +
+        '</div>';
+      root.appendChild(card);
+    });
+  }
+
+  function renderDebts() {
+    var root = document.getElementById('debtList');
+    root.innerHTML = '';
+    var types = ['cc', 'pl', 'car', 'mortgage', 'bnpl'];
+    state.debts.forEach(function (d, idx) {
+      var opts = types.map(function (tp) {
+        return '<option value="' + tp + '"' + (d.type === tp ? ' selected' : '') + '>' + t('type_' + tp) + '</option>';
+      }).join('');
+      var card = document.createElement('div');
+      card.className = 'dyn-card';
+      card.innerHTML =
+        '<div class="dyn-card-head"><span class="dyn-card-title">' + t('item') + ' ' + (idx + 1) + '</span>' +
+        '<button type="button" class="btn btn-danger btn-sm" data-rm-debt="' + d.id + '">' + t('remove') + '</button></div>' +
+        '<div class="grid-2">' +
+        '<label class="field"><span>' + t('creditor') + '</span><input type="text" data-debt="creditor" data-id="' + d.id + '" value="' + esc(d.creditor) + '" /></label>' +
+        '<label class="field"><span>' + t('debtType') + '</span><select data-debt="type" data-id="' + d.id + '">' + opts + '</select></label>' +
+        '<label class="field"><span>' + t('principal') + '</span><input type="number" min="0" step="100" data-debt="principal" data-id="' + d.id + '" value="' + n(d.principal) + '" /></label>' +
+        '<label class="field"><span>' + t('apr') + '</span><input type="number" min="0" step="0.1" data-debt="apr" data-id="' + d.id + '" value="' + n(d.apr) + '" /></label>' +
+        '<label class="field" style="grid-column:1/-1"><span>' + t('minPay') + '</span><input type="number" min="0" step="50" data-debt="minPay" data-id="' + d.id + '" value="' + n(d.minPay) + '" /></label>' +
+        '</div>';
+      root.appendChild(card);
+    });
+  }
+
+  const CHART = {
+    navy: '#0B1F3A',
+    gold: '#B8975A',
+    slate: '#5B7290',
+    teal: '#4E7D7A',
+    sand: '#C9B38A',
+    grey: '#9AA5B1',
+    burgundy: '#9B2C2C',
+    green: '#2F6B4F',
+    amber: '#A8741A',
+    label: '#3E4C5E'
+  };
+
+  const SECTION_TIPS = { profile: 3, income: 3, fixed: 2, car: 3, tax: 4, subs: 2, debt: 3, assets: 2, ins: 3, goals: 2 };
+
+  function buildSectionTips() {
+    document.querySelectorAll('details.section[data-tips]').forEach(function (d) {
+      var key = d.getAttribute('data-tips');
+      var layout = document.createElement('div');
+      layout.className = 'section-layout';
+      var fields = document.createElement('div');
+      fields.className = 'section-fields';
+      Array.prototype.slice.call(d.children).forEach(function (c) {
+        if (c.tagName !== 'SUMMARY') fields.appendChild(c);
+      });
+      var items = '';
+      for (var i = 1; i <= (SECTION_TIPS[key] || 0); i++) {
+        items += '<li data-i18n="tip_' + key + '_' + i + '"></li>';
+      }
+      var aside = document.createElement('aside');
+      aside.className = 'section-tips';
+      aside.innerHTML =
+        '<div class="section-tips-head">' +
+        '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.6.4 1 1.1 1 1.8v.3h5v-.3c0-.7.4-1.4 1-1.8A6 6 0 0 0 12 3z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
+        '<span data-i18n="tipsTitle"></span></div><ul>' + items + '</ul>';
+      layout.appendChild(fields);
+      layout.appendChild(aside);
+      d.appendChild(layout);
+    });
+  }
+
+  function updatePrintHeader() {
+    var client = String(state.clientName || '').trim();
+    var adviser = String(state.adviserName || '').trim();
+    document.getElementById('printClientValue').textContent = client;
+    document.getElementById('printClientLine').hidden = !client;
+    document.getElementById('printAdviserValue').textContent = adviser;
+    document.getElementById('printAdviserLine').hidden = !adviser;
+  }
+
+  function isoDate(d) {
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  }
+
+  function esc(s) {
+    return String(s == null ? '' : s)
+      .replace(/&/g, '&amp;')
+      .replace(/"/g, '&quot;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
+  }
+
+  function bindEvents() {
+    document.getElementById('btnZh').addEventListener('click', function () {
+      lang = 'zh-HK';
+      applyI18n();
+    });
+    document.getElementById('btnEn').addEventListener('click', function () {
+      lang = 'en';
+      applyI18n();
+    });
+
+    document.getElementById('formRoot').addEventListener('input', function (e) {
+      var el = e.target;
+      if (el.hasAttribute('data-text-key')) {
+        state[el.getAttribute('data-text-key')] = el.value;
+        updatePrintHeader();
+        return;
+      }
+      if (el.id === 'essentialInput') {
+        essentialManual = true;
+      }
+      if (el.hasAttribute('data-car')) {
+        var cid = el.getAttribute('data-id');
+        var cfield = el.getAttribute('data-car');
+        var carItem = state.cars.find(function (x) { return x.id === cid; });
+        if (carItem) carItem[cfield] = (cfield === 'name' || cfield === 'usage') ? el.value : n(el.value);
+      }
+      if (el.hasAttribute('data-policy')) {
+        var pid = el.getAttribute('data-id');
+        var pfield = el.getAttribute('data-policy');
+        var pol = state.policies.find(function (x) { return x.id === pid; });
+        if (pol) pol[pfield] = (pfield === 'company' || pfield === 'type') ? el.value : n(el.value);
+      }
+      if (el.hasAttribute('data-goal')) {
+        var gid = el.getAttribute('data-id');
+        var gfield = el.getAttribute('data-goal');
+        var goal = state.goals.find(function (x) { return x.id === gid; });
+        if (goal) goal[gfield] = (gfield === 'amount' || gfield === 'year') ? n(el.value) : el.value;
+      }
+      if (el.hasAttribute('data-asset')) {
+        var aid = el.getAttribute('data-id');
+        var afield = el.getAttribute('data-asset');
+        var ast = state.assets.find(function (x) { return x.id === aid; });
+        if (ast) ast[afield] = afield === 'value' ? n(el.value) : el.value;
+      }
+      if (el.hasAttribute('data-income')) {
+        var iid = el.getAttribute('data-id');
+        var ifield = el.getAttribute('data-income');
+        var inc = state.incomes.find(function (x) { return x.id === iid; });
+        if (inc) inc[ifield] = ifield === 'amount' ? n(el.value) : el.value;
+      }
+      if (el.hasAttribute('data-expense')) {
+        var eid = el.getAttribute('data-id');
+        var efield = el.getAttribute('data-expense');
+        var exp = state.expenses.find(function (x) { return x.id === eid; });
+        if (exp) exp[efield] = efield === 'amount' ? n(el.value) : el.value;
+      }
+      if (el.hasAttribute('data-sub')) {
+        var sid = el.getAttribute('data-id');
+        var sfield = el.getAttribute('data-sub');
+        var sub = state.subs.find(function (x) { return x.id === sid; });
+        if (sub) sub[sfield] = sfield === 'amount' ? n(el.value) : el.value;
+      }
+      if (el.hasAttribute('data-debt')) {
+        var did = el.getAttribute('data-id');
+        var dfield = el.getAttribute('data-debt');
+        var debt = state.debts.find(function (x) { return x.id === did; });
+        if (debt) debt[dfield] = (dfield === 'creditor' || dfield === 'type') ? el.value : n(el.value);
+      }
+      recalculate();
+    });
+
+    document.getElementById('formRoot').addEventListener('change', function (e) {
+      var tg = e.target;
+      if (tg.hasAttribute('data-debt') || tg.hasAttribute('data-sub') || tg.hasAttribute('data-income') || tg.hasAttribute('data-expense') || tg.hasAttribute('data-asset') || tg.hasAttribute('data-goal') || tg.hasAttribute('data-policy') || tg.hasAttribute('data-car') || tg.hasAttribute('data-key')) recalculate();
+    });
+
+    document.getElementById('formRoot').addEventListener('click', function (e) {
+      var btn = e.target.closest('[data-rm-car]');
+      if (btn) {
+        var carId = btn.getAttribute('data-rm-car');
+        state.cars = state.cars.filter(function (x) { return x.id !== carId; });
+        renderCars();
+        recalculate();
+        return;
+      }
+      btn = e.target.closest('[data-rm-policy]');
+      if (btn) {
+        var polId = btn.getAttribute('data-rm-policy');
+        state.policies = state.policies.filter(function (x) { return x.id !== polId; });
+        renderPolicies();
+        recalculate();
+        return;
+      }
+      btn = e.target.closest('[data-rm-goal]');
+      if (btn) {
+        var goalId = btn.getAttribute('data-rm-goal');
+        state.goals = state.goals.filter(function (x) { return x.id !== goalId; });
+        renderGoals();
+        recalculate();
+        return;
+      }
+      btn = e.target.closest('[data-rm-asset]');
+      if (btn) {
+        var astId = btn.getAttribute('data-rm-asset');
+        state.assets = state.assets.filter(function (x) { return x.id !== astId; });
+        renderAssets();
+        recalculate();
+        return;
+      }
+      btn = e.target.closest('[data-rm-income]');
+      if (btn) {
+        var incId = btn.getAttribute('data-rm-income');
+        state.incomes = state.incomes.filter(function (x) { return x.id !== incId; });
+        renderIncomes();
+        recalculate();
+        return;
+      }
+      btn = e.target.closest('[data-rm-expense]');
+      if (btn) {
+        var expId = btn.getAttribute('data-rm-expense');
+        state.expenses = state.expenses.filter(function (x) { return x.id !== expId; });
+        renderExpenses();
+        recalculate();
+        return;
+      }
+      btn = e.target.closest('[data-rm-sub]');
+      if (btn) {
+        var id = btn.getAttribute('data-rm-sub');
+        state.subs = state.subs.filter(function (x) { return x.id !== id; });
+        renderSubs();
+        recalculate();
+        return;
+      }
+      btn = e.target.closest('[data-rm-debt]');
+      if (btn) {
+        var id2 = btn.getAttribute('data-rm-debt');
+        state.debts = state.debts.filter(function (x) { return x.id !== id2; });
+        renderDebts();
+        recalculate();
+      }
+    });
+
+    document.getElementById('btnAddCar').addEventListener('click', function () {
+      state.cars.push({ id: uid(), name: '', usage: 'need', parking: 0, fuel: 0, tolls: 0, insurance: 0, license: 0, maint: 0, value: 0 });
+      renderCars();
+      recalculate();
+    });
+
+    document.getElementById('btnAddPolicy').addEventListener('click', function () {
+      state.policies.push({ id: uid(), company: '', type: 'savings', cover: 0, premium: 0, cashValue: 0 });
+      renderPolicies();
+      recalculate();
+    });
+
+    document.getElementById('btnAddGoal').addEventListener('click', function () {
+      state.goals.push({ id: uid(), type: 'goalOther', name: '', amount: 0, year: CURRENT_YEAR + 5 });
+      renderGoals();
+      recalculate();
+    });
+
+    document.getElementById('btnAddAsset').addEventListener('click', function () {
+      state.assets.push({ id: uid(), name: '', value: 0 });
+      renderAssets();
+      recalculate();
+    });
+
+    document.getElementById('btnAddIncome').addEventListener('click', function () {
+      state.incomes.push({ id: uid(), name: '', amount: 0 });
+      renderIncomes();
+      recalculate();
+    });
+
+    document.getElementById('btnAddExpense').addEventListener('click', function () {
+      state.expenses.push({ id: uid(), name: '', amount: 0, kind: 'need' });
+      renderExpenses();
+      recalculate();
+    });
+
+    document.getElementById('btnAddSub').addEventListener('click', function () {
+      state.subs.push({ id: uid(), name: '', amount: 0, category: '' });
+      renderSubs();
+      recalculate();
+    });
+
+    document.getElementById('btnAddDebt').addEventListener('click', function () {
+      state.debts.push({ id: uid(), creditor: '', type: 'cc', principal: 0, apr: 0, minPay: 0 });
+      renderDebts();
+      recalculate();
+    });
+
+    document.getElementById('extraPay').addEventListener('input', function () {
+      state.extraPay = n(this.value);
+      recalculate();
+    });
+
+    document.querySelectorAll('[data-print-report]').forEach(function (b) {
+      b.addEventListener('click', function () { window.print(); });
+    });
+
+    document.getElementById('btnReset').addEventListener('click', function () {
+      essentialManual = false;
+      state.clientName = '';
+      state.adviserName = '';
+      document.querySelectorAll('[data-text-key]').forEach(function (el) { el.value = ''; });
+      updatePrintHeader();
+      state.salary = 0;
+      state.sideIncome = 0;
+      state.bonusAnnual = 0;
+      state.investIncome = 0;
+      state.rent = 0;
+      state.mgmt = 0;
+      state.utilities = 0;
+      state.telecom = 0;
+      state.groceries = 0;
+      state.dining = 0;
+      state.cash = 0;
+      state.mpf = 0;
+      state.investAssets = 0;
+      state.otherAssets = 0;
+      state.policies = [];
+      state.cars = [];
+      state.taxInclude = 1;
+      state.taxMarital = 0;
+      state.taxAssessOverride = 0;
+      state.taxSingleParent = 0;
+      state.taxChildren = 0;
+      state.taxNewborn = 0;
+      state.taxParents60 = 0;
+      state.taxParents55 = 0;
+      state.taxParentsLive = 0;
+      state.taxTvc = 0;
+      state.taxHomeLoan = 0;
+      state.taxRent = 0;
+      state.taxSelfEdu = 0;
+      state.taxElderly = 0;
+      state.taxDonation = 0;
+      state.taxReliefCap = 0;
+      state.age = 35;
+      state.dependents = 0;
+      state.essentialOverride = 0;
+      state.retireAge = 65;
+      state.goals = [];
+      state.extraPay = 0;
+      state.incomes = [];
+      state.assets = [];
+      state.expenses = [];
+      state.subs = [];
+      state.debts = [];
+      document.querySelectorAll('[data-key]').forEach(function (el) {
+        var k = el.getAttribute('data-key');
+        el.value = state[k] != null ? state[k] : 0;
+      });
+      document.getElementById('extraPay').value = 0;
+      renderIncomes();
+      renderAssets();
+      renderCars();
+      renderPolicies();
+      renderGoals();
+      renderExpenses();
+      renderSubs();
+      renderDebts();
+      recalculate();
+    });
+
+    window.addEventListener('resize', function () {
+      Object.keys(charts).forEach(function (k) { charts[k].resize(); });
+      if (gaugeChart) gaugeChart.resize();
+    });
+
+    var printOpenState = [];
+    var printSavedTitle = null;
+    window.addEventListener('beforeprint', function () {
+      if (!printOpenState.length) {
+        document.querySelectorAll('details.section').forEach(function (d) {
+          printOpenState.push([d, d.open]);
+          d.open = true;
+        });
+      }
+      var now = new Date();
+      updatePrintHeader();
+      document.getElementById('printDateValue').textContent = now.toLocaleDateString(
+        lang === 'en' ? 'en-HK' : 'zh-HK', { year: 'numeric', month: 'long', day: 'numeric' }
+      );
+      if (printSavedTitle === null) printSavedTitle = document.title;
+      document.title = [t('printDocTitle'), String(state.clientName || '').trim(), isoDate(now)]
+        .filter(Boolean).join(' - ');
+      // Fixed canvas sizes: print CSS scales them to the page width
+      Object.keys(charts).forEach(function (k) { charts[k].resize({ width: 340, height: 240 }); });
+      if (gaugeChart) gaugeChart.resize({ width: 140, height: 140 });
+    });
+    window.addEventListener('afterprint', function () {
+      printOpenState.forEach(function (p) { p[0].open = p[1]; });
+      printOpenState = [];
+      if (printSavedTitle !== null) {
+        document.title = printSavedTitle;
+        printSavedTitle = null;
+      }
+      // Explicit sizes persist in ECharts until reset to 'auto'
+      var auto = { width: 'auto', height: 'auto' };
+      Object.keys(charts).forEach(function (k) { charts[k].resize(auto); });
+      if (gaugeChart) gaugeChart.resize(auto);
+    });
+  }
+
+  function boot() {
+    // Sync initial scalar inputs from HTML defaults into state already set
+    document.querySelectorAll('[data-key]').forEach(function (el) {
+      var key = el.getAttribute('data-key');
+      if (key !== 'essentialOverride') state[key] = n(el.value);
+    });
+    document.querySelectorAll('[data-text-key]').forEach(function (el) {
+      state[el.getAttribute('data-text-key')] = el.value;
+    });
+    updatePrintHeader();
+    buildSectionTips();
+    document.getElementById('extraPay').value = state.extraPay;
+    bindEvents();
+    applyI18n();
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', boot);
+  } else {
+    boot();
+  }
+})();
+  </script>
+</body>
+</html>
