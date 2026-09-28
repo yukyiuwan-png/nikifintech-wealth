@@ -185,6 +185,29 @@
       background: var(--brand);
       color: #fff;
     }
+    .fx-box {
+      display: grid;
+      gap: 6px;
+      margin-bottom: 12px;
+      padding: 10px 12px;
+      border: 1px solid var(--line);
+      border-left: 2px solid var(--accent);
+      border-radius: 10px;
+      background: var(--accent-soft);
+    }
+    .fx-box[hidden] { display: none; }
+    .fx-rate {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--ink);
+    }
+    .fx-rate input { width: 84px; min-height: 0; padding: 4px 8px; font-weight: 700; }
+    .fx-box .hint { margin: 0; line-height: 1.5; }
+    .fx-note { margin: 0; font-size: 12px; font-weight: 600; color: var(--accent-deep); }
     .btn {
       border: none;
       border-radius: 10px;
@@ -412,6 +435,9 @@
       .score-box { grid-template-columns: 1fr; }
       .privacy-pill span { display: none; }
       .privacy-pill { padding: 8px; }
+      .nav-actions { gap: 6px; }
+      .brand-sub { overflow: hidden; text-overflow: ellipsis; }
+      .lang-toggle button { padding: 8px 9px; }
     }
     #gaugeChart { width: 100%; height: 140px; }
     .score-dims { display: grid; gap: 8px; }
@@ -541,6 +567,88 @@
       font-variant-numeric: tabular-nums;
     }
 
+    details.method {
+      margin: 16px 0 0;
+      border-radius: var(--radius);
+      background: var(--surface);
+      box-shadow: var(--shadow);
+    }
+    details.method > summary { font-size: 15px; padding: 14px 16px; }
+    details.method > summary .summary-left svg { color: var(--accent-deep); flex-shrink: 0; }
+    .method-body {
+      display: grid;
+      gap: 12px;
+      padding: 12px 16px 16px;
+      border-top: 1px solid var(--line);
+    }
+    .method-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px 18px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--brand);
+    }
+    .method-body > .inline-note { margin: 0; line-height: 1.55; }
+    .method-legend { display: flex; flex-wrap: wrap; gap: 6px; }
+    .m-tag {
+      display: inline-block;
+      margin-right: 6px;
+      padding: 1px 8px;
+      border: 1px solid;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 700;
+      line-height: 1.6;
+      white-space: nowrap;
+      vertical-align: 1px;
+    }
+    .method-legend .m-tag { margin-right: 0; }
+    .m-off { color: var(--brand); background: var(--brand-soft); border-color: var(--brand-tint); }
+    .m-rot { color: var(--accent-deep); background: var(--accent-soft); border-color: #e3d3b0; }
+    .m-asm { color: var(--muted); background: var(--surface-2); border-color: var(--line-strong); }
+    .m-ver { margin: 0 0 0 6px; color: var(--ok); background: var(--ok-bg); border-color: var(--ok-line); }
+    .method-groups {
+      display: grid;
+      gap: 14px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      counter-reset: mgroup;
+    }
+    .method-groups > .method-group { counter-increment: mgroup; }
+    .method-group h3 { margin: 0 0 6px; font-size: 14px; color: var(--ink); }
+    .method-groups > .method-group > h3::before {
+      content: counter(mgroup) ". ";
+      color: var(--accent-deep);
+    }
+    .method-group ul {
+      display: grid;
+      gap: 6px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+    .method-group ul > li {
+      padding: 8px 10px;
+      border: 1px solid var(--line);
+      border-left: 2px solid var(--accent);
+      border-radius: 10px;
+      background: var(--surface-2);
+      font-size: 13px;
+      line-height: 1.55;
+      color: var(--ink-soft);
+    }
+    .method-links ul > li { border-left-color: var(--brand); }
+    .method-links a {
+      color: var(--brand);
+      font-weight: 600;
+      text-decoration: underline;
+      text-decoration-color: var(--accent);
+      text-underline-offset: 3px;
+      overflow-wrap: anywhere;
+    }
+
     .footer {
       margin-top: 28px;
       padding: 18px 16px;
@@ -658,6 +766,15 @@
       .chart-card h3 { font-size: 16px; }
       .chart { height: 300px; }
 
+      details.method { margin-top: 20px; }
+      details.method > summary { font-size: 18px; padding: 16px 22px; }
+      .method-body { padding: 16px 22px 22px; gap: 14px; }
+      .method-meta { font-size: 14px; }
+      .method-groups { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px 22px; }
+      .method-group h3 { font-size: 15px; }
+      .method-group ul > li { font-size: 14px; }
+      .method-links ul { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+
       .footer { font-size: 13px; }
     }
     @media screen and (min-width: 1280px) {
@@ -694,6 +811,7 @@
       .privacy-pill span { display: inline; }
 
       .lang-toggle,
+      .fx-box,
       .btn,
       .chev,
       .section-tips,
@@ -803,6 +921,46 @@
       .mini-stat, .chart-card, .dyn-card, label.field, .alert,
       .footer { break-inside: avoid; }
 
+      details.method {
+        break-before: page;
+        margin: 0;
+        border: none;
+        border-radius: 0;
+        background: none;
+      }
+      details.method > summary {
+        padding: 0 0 4px;
+        border-bottom: 1.5px solid var(--brand);
+        font-size: 13pt;
+        color: var(--brand-deep);
+      }
+      .method-body { padding: 8px 0 0; gap: 6px; border-top: none; }
+      .method-meta { font-size: 9pt; }
+      .method-body > .inline-note { font-size: 8pt; }
+      .m-tag { padding: 0 5px; font-size: 7pt; line-height: 1.5; }
+      .method-body, .method-groups, .method-group ul { display: block; }
+      .method-body > * + * { margin-top: 6px; }
+      .method-groups > .method-group + .method-group { margin-top: 5px; }
+      .method-group h3 { margin-bottom: 2px; font-size: 10pt; }
+      .method-group ul > li + li { margin-top: 2px; }
+      .method-group ul > li {
+        padding: 1px 7px;
+        border-radius: 6px;
+        background: #fff;
+        font-size: 8.3pt;
+        line-height: 1.3;
+        break-inside: avoid;
+      }
+      .method-links ul > li + li { margin-top: 0; }
+      .method-links ul > li { padding: 0 0 0 8px; border: none; border-left: 2px solid var(--brand); border-radius: 0; line-height: 1.45; }
+      .method-links { break-inside: avoid; }
+      #methodology a[href^="http"] { text-decoration: none; }
+      #methodology a[href^="http"]::after {
+        content: " (" attr(href) ")";
+        font-weight: 400;
+        color: var(--ink-soft);
+      }
+
       .footer {
         max-width: none;
         margin-top: 14px;
@@ -839,6 +997,10 @@
         <button type="button" id="btnZh" class="active">繁中</button>
         <button type="button" id="btnEn">EN</button>
       </div>
+      <div class="lang-toggle" role="group" aria-label="Currency">
+        <button type="button" id="btnHkd" class="active">HKD</button>
+        <button type="button" id="btnUsd">USD</button>
+      </div>
     </div>
   </header>
 
@@ -851,6 +1013,7 @@
       <div class="print-meta">
         <p id="printAdviserLine" hidden><span data-i18n="printAdviser">顧問：</span><span id="printAdviserValue"></span></p>
         <p><span data-i18n="printDate">報告日期：</span><span id="printDateValue"></span></p>
+        <p id="printFxLine" hidden></p>
       </div>
     </div>
     <p class="hero-line" data-i18n="heroLine">輸入客戶收支、債務與保障資料，即時生成理財健康診斷（僅存於本機記憶體）。</p>
@@ -916,7 +1079,7 @@
                 <label class="field"><span data-i18n="taxChildren">子女人數</span>
                   <input type="number" min="0" max="9" step="1" data-key="taxChildren" value="1" />
                 </label>
-                <label class="field"><span data-i18n="taxNewborn">其中今年出生</span>
+                <label class="field"><span data-i18n="taxNewborn">其中未滿 2 歲</span>
                   <input type="number" min="0" max="9" step="1" data-key="taxNewborn" value="0" />
                 </label>
                 <label class="field"><span data-i18n="taxParents60">供養父母／祖父母（60 歲或以上）</span>
@@ -1043,7 +1206,7 @@
               <svg class="chev" viewBox="0 0 24 24" fill="none"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
             </summary>
             <div class="section-body">
-              <p class="inline-note" data-i18n="taxIntro">按《稅務條例》2025/26 課稅年度薪俸稅規則估算：累進稅率與標準稅率取較低者，稅款按月攤分計入開支。</p>
+              <p class="inline-note" data-i18n="taxIntro">按《稅務條例》2026/27 課稅年度薪俸稅規則估算：累進稅率與標準稅率取較低者，稅款按月攤分計入開支。</p>
               <div class="grid-2">
                 <label class="field"><span data-i18n="taxInclude">計入每月開支</span>
                   <select data-key="taxInclude">
@@ -1072,7 +1235,7 @@
                 <label class="field"><span data-i18n="taxSelfEdu">個人進修開支（上限 100,000）</span>
                   <input type="number" min="0" step="1000" data-key="taxSelfEdu" value="0" />
                 </label>
-                <label class="field"><span data-i18n="taxElderly">長者住宿照顧開支（上限 100,000）</span>
+                <label class="field"><span data-i18n="taxElderly">長者住宿照顧開支（上限 110,000）</span>
                   <input type="number" min="0" step="1000" data-key="taxElderly" value="0" />
                 </label>
                 <label class="field"><span data-i18n="taxDonation">認可慈善捐款（上限為入息 35%）</span>
@@ -1080,7 +1243,7 @@
                 </label>
                 <label class="field">
                   <span data-i18n="taxReliefCap">一次性寬減稅款上限</span>
-                  <span class="hint" data-i18n="taxReliefHint">按當年財政預算案輸入（例如 2024/25 為 100% 寬減，上限 HKD 1,500）；不確定可填 0</span>
+                  <span class="hint" data-i18n="taxReliefHint">2026/27 暫未公布稅款寬減，預設 0（2025/26 為 100% 寬減，上限 HKD 3,000）</span>
                   <input type="number" min="0" step="100" data-key="taxReliefCap" value="0" />
                 </label>
               </div>
@@ -1219,6 +1382,15 @@
           </div>
         </div>
         <div class="panel-body">
+          <div class="fx-box" id="fxBox" hidden>
+            <label class="fx-rate">
+              <span data-i18n="fxRateLabel">匯率：1 USD =</span>
+              <input type="number" id="fxRate" min="7" max="8.5" step="0.01" value="7.80" inputmode="decimal" />
+              <span>HKD</span>
+            </label>
+            <p class="hint" data-i18n="fxHint">港元與美元掛鉤，允許兑換範圍 7.75–7.85；為保障私隱，工具不會連網取得即時匯率，請按需要手動輸入</p>
+            <p class="fx-note" id="fxNote"></p>
+          </div>
           <div class="kpi-grid" id="kpiGrid"></div>
 
           <div class="score-box">
@@ -1277,6 +1449,140 @@
         </div>
       </section>
     </div>
+
+    <details class="section method" id="methodology">
+      <summary>
+        <span class="summary-left">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 4h10l4 4v12H5z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M9 11h6M9 15h6M9 7h3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+          <span data-i18n="methodTitle">計算方法與參考來源</span>
+        </span>
+        <svg class="chev" viewBox="0 0 24 24" fill="none"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      </summary>
+      <div class="method-body">
+        <div class="method-meta">
+          <span data-i18n="methodYear">規則適用年度：2026/27</span>
+          <span data-i18n="methodVerified">最後核對日期：2026-09-28（稅率、免稅額、稅款寬減、強積金供款）</span>
+        </div>
+        <p class="inline-note" data-i18n="methodNote"></p>
+        <p class="inline-note" data-i18n="methodUnverified"></p>
+        <div class="method-legend">
+          <span class="m-tag m-off" data-i18n="mTagOff">官方規則</span>
+          <span class="m-tag m-rot" data-i18n="mTagRot">業界經驗法則</span>
+          <span class="m-tag m-asm" data-i18n="mTagAsm">自訂假設</span>
+        </div>
+
+        <ol class="method-groups">
+          <li class="method-group">
+            <h3 data-i18n="mH1"></h3>
+            <ul>
+              <li><span class="m-tag m-off" data-i18n="mTagOff">官方規則</span><span data-i18n="m1_1"></span><span class="m-tag m-ver" data-i18n="mTagVer">已核對 GovHK</span></li>
+              <li><span class="m-tag m-off" data-i18n="mTagOff">官方規則</span><span data-i18n="m1_2"></span><span class="m-tag m-ver" data-i18n="mTagVer">已核對 GovHK</span></li>
+              <li><span class="m-tag m-off" data-i18n="mTagOff">官方規則</span><span data-i18n="m1_3"></span><span class="m-tag m-ver" data-i18n="mTagVerIrd">已核對 稅務局</span></li>
+              <li><span class="m-tag m-off" data-i18n="mTagOff">官方規則</span><span data-i18n="m1_4"></span></li>
+              <li><span class="m-tag m-asm" data-i18n="mTagAsm">自訂假設</span><span data-i18n="m1_5"></span></li>
+              <li><span class="m-tag m-asm" data-i18n="mTagAsm">自訂假設</span><span data-i18n="m1_6"></span></li>
+              <li><span class="m-tag m-off" data-i18n="mTagOff">官方規則</span><span data-i18n="m1_7"></span></li>
+              <li><span class="m-tag m-off" data-i18n="mTagOff">官方規則</span><span data-i18n="m1_8"></span><span class="m-tag m-ver" data-i18n="mTagVer">已核對 GovHK</span></li>
+              <li><span class="m-tag m-asm" data-i18n="mTagAsm">自訂假設</span><span data-i18n="m1_9"></span></li>
+            </ul>
+          </li>
+          <li class="method-group">
+            <h3 data-i18n="mH2"></h3>
+            <ul>
+              <li><span class="m-tag m-off" data-i18n="mTagOff">官方規則</span><span data-i18n="m2_1"></span><span class="m-tag m-ver" data-i18n="mTagVerMpfa">已核對 積金局</span></li>
+              <li><span class="m-tag m-asm" data-i18n="mTagAsm">自訂假設</span><span data-i18n="m2_2"></span></li>
+              <li><span class="m-tag m-asm" data-i18n="mTagAsm">自訂假設</span><span data-i18n="m2_3"></span></li>
+              <li><span class="m-tag m-asm" data-i18n="mTagAsm">自訂假設</span><span data-i18n="m2_4"></span></li>
+            </ul>
+          </li>
+          <li class="method-group">
+            <h3 data-i18n="mH3"></h3>
+            <ul>
+              <li><span class="m-tag m-rot" data-i18n="mTagRot">業界經驗法則</span><span data-i18n="m3_1"></span></li>
+              <li><span class="m-tag m-asm" data-i18n="mTagAsm">自訂假設</span><span data-i18n="m3_2"></span></li>
+              <li><span class="m-tag m-asm" data-i18n="mTagAsm">自訂假設</span><span data-i18n="m3_3"></span></li>
+              <li><span class="m-tag m-asm" data-i18n="mTagAsm">自訂假設</span><span data-i18n="m3_4"></span></li>
+            </ul>
+          </li>
+          <li class="method-group">
+            <h3 data-i18n="mH4"></h3>
+            <ul>
+              <li><span class="m-tag m-rot" data-i18n="mTagRot">業界經驗法則</span><span data-i18n="m4_1"></span></li>
+              <li><span class="m-tag m-asm" data-i18n="mTagAsm">自訂假設</span><span data-i18n="m4_2"></span></li>
+            </ul>
+          </li>
+          <li class="method-group">
+            <h3 data-i18n="mH5"></h3>
+            <ul>
+              <li><span class="m-tag m-asm" data-i18n="mTagAsm">自訂假設</span><span data-i18n="m5_1"></span></li>
+              <li><span class="m-tag m-rot" data-i18n="mTagRot">業界經驗法則</span><span data-i18n="m5_2"></span></li>
+              <li><span class="m-tag m-off" data-i18n="mTagOff">官方規則</span><span data-i18n="m5_3"></span></li>
+              <li><span class="m-tag m-asm" data-i18n="mTagAsm">自訂假設</span><span data-i18n="m5_4"></span></li>
+              <li><span class="m-tag m-asm" data-i18n="mTagAsm">自訂假設</span><span data-i18n="m5_5"></span></li>
+            </ul>
+          </li>
+          <li class="method-group">
+            <h3 data-i18n="mH6"></h3>
+            <ul>
+              <li><span class="m-tag m-rot" data-i18n="mTagRot">業界經驗法則</span><span data-i18n="m6_1"></span></li>
+              <li><span class="m-tag m-asm" data-i18n="mTagAsm">自訂假設</span><span data-i18n="m6_2"></span></li>
+              <li><span class="m-tag m-asm" data-i18n="mTagAsm">自訂假設</span><span data-i18n="m6_3"></span></li>
+            </ul>
+          </li>
+          <li class="method-group">
+            <h3 data-i18n="mH7"></h3>
+            <ul>
+              <li><span class="m-tag m-asm" data-i18n="mTagAsm">自訂假設</span><span data-i18n="m7_1"></span></li>
+              <li><span class="m-tag m-rot" data-i18n="mTagRot">業界經驗法則</span><span data-i18n="m7_2"></span></li>
+              <li><span class="m-tag m-asm" data-i18n="mTagAsm">自訂假設</span><span data-i18n="m7_3"></span></li>
+            </ul>
+          </li>
+          <li class="method-group">
+            <h3 data-i18n="mH8"></h3>
+            <ul>
+              <li><span class="m-tag m-asm" data-i18n="mTagAsm">自訂假設</span><span data-i18n="m8_1"></span></li>
+              <li><span class="m-tag m-asm" data-i18n="mTagAsm">自訂假設</span><span data-i18n="m8_2"></span></li>
+            </ul>
+          </li>
+          <li class="method-group">
+            <h3 data-i18n="mH9"></h3>
+            <ul>
+              <li><span class="m-tag m-asm" data-i18n="mTagAsm">自訂假設</span><span data-i18n="m9_1"></span></li>
+              <li><span class="m-tag m-asm" data-i18n="mTagAsm">自訂假設</span><span data-i18n="m9_2"></span></li>
+              <li><span class="m-tag m-asm" data-i18n="mTagAsm">自訂假設</span><span data-i18n="m9_3"></span></li>
+              <li><span class="m-tag m-asm" data-i18n="mTagAsm">自訂假設</span><span data-i18n="m9_4"></span></li>
+              <li><span class="m-tag m-asm" data-i18n="mTagAsm">自訂假設</span><span data-i18n="m9_5"></span></li>
+              <li><span class="m-tag m-asm" data-i18n="mTagAsm">自訂假設</span><span data-i18n="m9_6"></span></li>
+            </ul>
+          </li>
+          <li class="method-group">
+            <h3 data-i18n="mH10"></h3>
+            <ul>
+              <li><span class="m-tag m-asm" data-i18n="mTagAsm">自訂假設</span><span data-i18n="m10_1"></span></li>
+            </ul>
+          </li>
+          <li class="method-group">
+            <h3 data-i18n="mH11"></h3>
+            <ul>
+              <li><span class="m-tag m-asm" data-i18n="mTagAsm">自訂假設</span><span data-i18n="m11_1"></span></li>
+            </ul>
+          </li>
+        </ol>
+
+        <div class="method-group method-links">
+          <h3 data-i18n="methodLinksTitle">官方資料</h3>
+          <ul id="methodLinks">
+            <li><a href="https://www.gov.hk/tc/residents/taxes/taxfiling/taxrates/salariesrates.htm" target="_blank" rel="noopener noreferrer" data-i18n="linkGovTax" data-i18n-href="linkGovTaxUrl">GovHK：薪俸稅及個人入息課稅稅率</a></li>
+            <li><a href="https://www.ird.gov.hk/chi/tax/budget.htm" target="_blank" rel="noopener noreferrer" data-i18n="linkIrd" data-i18n-href="linkIrdUrl">稅務局：2026-27 年度財政預算案稅務措施</a></li>
+            <li><a href="https://www.mpfa.org.hk/tc/mpf-system/mandatory-contributions/employees" target="_blank" rel="noopener noreferrer" data-i18n="linkMpfa" data-i18n-href="linkMpfaUrl">積金局：僱員強制性供款</a></li>
+            <li><a href="https://www.vhis.gov.hk" target="_blank" rel="noopener noreferrer" data-i18n="linkVhis">自願醫保計劃</a></li>
+            <li><a href="https://www.ifec.org.hk" target="_blank" rel="noopener noreferrer" data-i18n="linkIfec">投資者及理財教育委員會</a></li>
+            <li><a href="https://www.hkma.gov.hk" target="_blank" rel="noopener noreferrer" data-i18n="linkHkma">香港金融管理局</a></li>
+            <li><a href="https://www.budget.gov.hk" target="_blank" rel="noopener noreferrer" data-i18n="linkBudget">財政預算案</a></li>
+          </ul>
+        </div>
+      </div>
+    </details>
 
     <footer class="footer">
       <p data-i18n="disclaimer">
@@ -1425,7 +1731,7 @@
       assets: '資產總值',
       liabilities: '負債總額',
       netWorth: '淨資產',
-      principalAxis: '本金 (HKD)',
+      principalAxis: '本金',
       aprAxis: '年利率 %',
       balLeft: '剩餘債務',
       snowball: '雪球法',
@@ -1491,7 +1797,7 @@
       carSummaryTpl: '汽車每月開支 {m} · 每年 {y} · 車輛市值合共 {v}（計入資產，不計入退休儲備）',
       carLine: '汽車開支',
       secTax: '薪俸稅（香港）',
-      taxIntro: '按《稅務條例》2025/26 課稅年度薪俸稅規則估算：累進稅率與標準稅率取較低者，稅款按月攤分計入開支。婚姻、子女及供養父母資料取自「個人資料」。',
+      taxIntro: '按《稅務條例》2026/27 課稅年度薪俸稅規則估算：累進稅率與標準稅率取較低者，稅款按月攤分計入開支。婚姻、子女及供養父母資料取自「個人資料」。',
       taxInclude: '計入每月開支',
       optYes: '是',
       optNo: '否',
@@ -1503,7 +1809,7 @@
       taxAssessHint: '0 = 自動估算：月薪（還原僱員強積金供款）×12 + 花紅 + 兼職收入×12；租金收入屬物業稅，不計入',
       taxSingleParent: '單親',
       taxChildren: '子女人數',
-      taxNewborn: '其中今年出生',
+      taxNewborn: '其中未滿 2 歲',
       taxParents60: '供養父母／祖父母（60 歲或以上）',
       taxParents55: '供養父母／祖父母（55–59 歲）',
       taxParentsLive: '全年與受供養父母同住',
@@ -1513,10 +1819,10 @@
       taxHousingHint: '與住宅租金合共上限 HKD 100,000（有子女 HKD 120,000）',
       taxRent: '住宅租金（全年）',
       taxSelfEdu: '個人進修開支（上限 100,000）',
-      taxElderly: '長者住宿照顧開支（上限 100,000）',
+      taxElderly: '長者住宿照顧開支（上限 110,000）',
       taxDonation: '認可慈善捐款（上限為入息 35%）',
       taxReliefCap: '一次性寬減稅款上限',
-      taxReliefHint: '按當年財政預算案輸入（例如 2024/25 為 100% 寬減，上限 HKD 1,500）；不確定可填 0',
+      taxReliefHint: '2026/27 暫未公布稅款寬減，預設 0（2025/26 為 100% 寬減，上限 HKD 3,000）',
       taxAssessable: '應評稅入息',
       taxDeductions: '扣除總額',
       taxMpfDed: '其中強積金強制性供款',
@@ -1566,7 +1872,7 @@
       printDocTitle: '客戶理財報告',
       tipsTitle: '參考',
       tip_profile_1: '受養人人數按子女、受供養父母及無收入配偶自動計算。',
-      tip_profile_2: '婚姻狀況影響免稅額：配偶無收入或選擇合併評稅，可享已婚人士免稅額 HKD 264,000。',
+      tip_profile_2: '婚姻狀況影響免稅額：配偶無收入或選擇合併評稅，可享已婚人士免稅額 HKD 290,000。',
       tip_profile_3: '目標退休年齡預設 65 歲，可按客戶計劃調整。',
       tip_income_1: '年度花紅請輸入全年金額，程式自動 ÷12 計入每月收入。',
       tip_income_2: '租金收入屬物業稅範圍，不計入薪俸稅。',
@@ -1591,7 +1897,83 @@
       tip_ins_2: '儲蓄／年金保單保費計入儲蓄，不當作消費。',
       tip_ins_3: '自願醫保（VHIS）及合資格延期年金（QDAP）保費可扣稅。',
       tip_goals_1: '目標按年份先後，以每月盈餘逐一檢查是否足夠。',
-      tip_goals_2: '如資金不足，可考慮延後目標年份或調整金額。'
+      tip_goals_2: '如資金不足，可考慮延後目標年份或調整金額。',
+      methodTitle: '計算方法與參考來源',
+      methodYear: '規則適用年度：2026/27',
+      methodVerified: '最後核對日期：2026-09-28（稅率、免稅額、稅款寬減、強積金供款）',
+      methodUnverified: '2026-27 年度財政預算案只調整了長者住宿照顧扣除上限；其他扣除上限沿用現行數字，尚未逐項核對。',
+      mTagVer: '已核對 GovHK',
+      mTagVerIrd: '已核對 稅務局',
+      mTagVerMpfa: '已核對 積金局',
+      methodNote: '稅務及強積金數字應於每個課稅年度重新核對；本工具只作教育參考，結果屬估算，不構成財務、稅務或保險建議。',
+      mTagOff: '官方規則',
+      mTagRot: '業界經驗法則',
+      mTagAsm: '自訂假設',
+      mH1: '薪俸稅（《稅務條例》第 112 章）',
+      m1_1: '累進稅率：應課稅入息實額每 HKD 50,000 為一級，稅率依次為 2%、6%、10%、14%，其餘按 17%。',
+      m1_2: '標準稅率：入息實額首 HKD 5,000,000 按 15%，其後按 16%；最終取累進稅與標準稅較低者。',
+      m1_3: '免稅額（2026/27）：基本 HKD 145,000；已婚人士 HKD 290,000；單親 HKD 145,000；每名子女 HKD 140,000（未滿 2 歲另加 HKD 140,000）；供養父母／祖父母 60 歲或以上每名 HKD 55,000、55–59 歲每名 HKD 27,500，全年同住則加倍。',
+      m1_4: '扣除上限：強積金強制性供款 HKD 18,000；可扣稅自願性供款（TVC）連合資格延期年金（QDAP）保費合共 HKD 60,000；自願醫保（VHIS）每名受保人 HKD 8,000；居所貸款利息連住宅租金合共 HKD 100,000（有子女時 HKD 120,000）；個人進修 HKD 100,000；長者住宿照顧 HKD 110,000（2026/27 起）；認可慈善捐款不超過扣除後入息的 35%。',
+      m1_5: '輸入的每月薪金視為已扣 5% 僱員強積金（按積金局規則，見第 2 節）的淨額，並還原為總額：淨額低於 HKD 7,100 不作還原；還原後超過 HKD 30,000 時，供款按上限每月 HKD 1,500 計算。',
+      m1_6: '只有選擇「已婚（配偶無收入或合併評稅）」才給予已婚人士免稅額；配偶有收入則按單身計算（工具簡化，未比較分開評稅與合併評稅）。',
+      m1_7: '租金收入屬物業稅範圍，不計入薪俸稅估算。',
+      m1_8: '稅款寬減：2025/26 課稅年度寬減 100% 稅款，每宗上限 HKD 3,000；2026/27 暫未公布（通常於下一份財政預算案宣布）。',
+      m1_9: '寬減上限是可修改的輸入欄，預設 0；如日後公布 2026/27 寬減，請自行輸入。',
+      mH2: '強積金及扣稅項目',
+      m2_1: '僱員及僱主各按有關入息供款 5%：每月有關入息低於 HKD 7,100 僱員毋須供款，入息上限 HKD 30,000（僱員每月最多 HKD 1,500）；有關入息包括工資、薪金、花紅、佣金及津貼等。薪俸稅扣除上限為每年 HKD 18,000。',
+      m2_2: '每份自願醫保保單視作一名受保人，扣除額為該保單全年保費與 HKD 8,000 的較低者。',
+      m2_3: '合資格延期年金保單的保費自動計入 TVC／QDAP 合共 HKD 60,000 上限。',
+      m2_4: '積金局規定花紅及佣金亦屬有關入息，但工具只按每月薪金計算僱員強積金；由於強積金扣稅上限為每年 HKD 18,000，月薪達 HKD 30,000 時不受影響，但月薪較低而花紅較多時，可能略為低估強積金扣除額。',
+      mH3: '現金流及 50/30/20 法則',
+      m3_1: '50/30/20 法則（Elizabeth Warren《All Your Worth》）：收入約 50% 用於必要開支、30% 用於想要開支、20% 用於儲蓄。',
+      m3_2: '必要開支：租金或按揭、管理費及差餉、水電煤、電訊、日常雜貨、債務最低還款、保障型保費、稅款（如計入開支），以及標記為必要的其他開支及汽車開支。想要開支：外出用餐、訂閱，以及標記為享樂的其他開支及汽車開支。',
+      m3_3: '儲蓄型及年金保單保費計入儲蓄而非消費；儲蓄率 =（每月盈餘 + 儲蓄型保費）÷ 每月總收入。',
+      m3_4: '指標評級：每月盈餘 ≥ 0 且達月薪 10% 為良好，≥ 0 為注意，負數為警示；儲蓄率 ≥ 20% 為良好，≥ 10% 為注意。',
+      mH4: '應急基金',
+      m4_1: '應急基金目標為 3–6 個月必要開支；可支持月數 = 現金 ÷ 每月必要開支（≥ 6 個月為良好，≥ 3 個月為注意）。',
+      m4_2: '每月必要開支自動估算（可手動覆寫）：住屋、水電煤、電訊、雜貨、債務最低還款、保障型保費、訂閱（最多計 HKD 200）、必要類其他開支及汽車開支、稅款。',
+      mH5: '債務',
+      m5_1: '債務佔收入比率（DTI）= 每月債務最低還款 ÷ 每月總收入；≤ 20% 為良好，≤ 36% 為注意，高於 36% 為警示。',
+      m5_2: '36% 是常見的借貸經驗法則。',
+      m5_3: '香港金融管理局的按揭「供款與入息比率」（DSR）是另一套監管指標，計算口徑不同，不應與本工具的 DTI 直接比較。',
+      m5_4: '信用卡年利率高於 30% 會提示優先清還（工具門檻）；債務加權平均年利率高於 20% 亦會觸發清債建議。',
+      m5_5: '雪球法（先還最小結餘）與雪崩法（先還最高利率）按月模擬：每月先計利息，再付各項最低還款，餘額集中還目標債務；模擬上限 40 年（480 個月）。',
+      mH6: '保障缺口',
+      m6_1: '建議人壽保額 = 年收入 × 10 + 每名受養人 × 年收入 × 0.5；保障缺口 = 建議保額 − 現有人壽保額（年收入 = 每月總收入 × 12）。',
+      m6_2: '受養人 = 子女 + 受供養父母／祖父母 + 無收入配偶（選擇「已婚（配偶無收入或合併評稅）」時計一人）。',
+      m6_3: '只計人壽保單保額；儲蓄型保單的身故賠償不計入。',
+      mH7: '退休',
+      m7_1: '假設每年實質回報 3%（已扣除通脹）：現有資產按年複利，每月正數盈餘按月複利投入至退休年齡。',
+      m7_2: '退休所需 = 現時每月收入 × 70% × 12 × 20 年。',
+      m7_3: '可用資產：現金、強積金、投資及保單現金價值全數計算；其他資產按 50% 計算；汽車價值不計入。',
+      mH8: '理財目標',
+      m8_1: '每月所需 = 目標金額 ÷ 距目標年份的月數（最少 1 個月）。',
+      m8_2: '按目標年份先後累計每月所需，再與每月盈餘比較；累計金額超過盈餘的目標會標示為不足。',
+      mH9: '理財健康分數',
+      m9_1: '五個範疇各 20 分，總分 100。',
+      m9_2: '儲蓄率：≥ 20% 得 20 分；≥ 10% 得 14 分；≥ 0% 得 8 分；負數得 2 分。',
+      m9_3: '應急基金月數：≥ 6 得 20 分；≥ 3 得 14 分；≥ 1 得 8 分；其餘得 3 分。',
+      m9_4: '債務佔收入比率：≤ 20% 得 20 分；≤ 36% 得 12 分；≤ 50% 得 6 分；其餘得 2 分。',
+      m9_5: '保障缺口：無缺口得 20 分；少於 2 倍年收入得 12 分；少於 5 倍年收入得 7 分；其餘得 3 分。',
+      m9_6: '退休預測 ÷ 退休所需：≥ 100% 得 20 分；≥ 70% 得 14 分；≥ 40% 得 8 分；其餘得 3 分。',
+      mH10: '訂閱',
+      m10_1: '全年訂閱開支超過全年收入 3% 時，會提示檢視訂閱。',
+      mH11: '顯示貨幣',
+      m11_1: '所有輸入及計算均以港元進行；選擇美元時，輸出金額按手動輸入的匯率（預設 1 USD = 7.80 HKD）換算顯示。工具不會連網取得即時匯率。',
+      methodLinksTitle: '官方資料',
+      linkIrd: '稅務局：2026-27 年度財政預算案稅務措施',
+      linkIrdUrl: 'https://www.ird.gov.hk/chi/tax/budget.htm',
+      linkMpfa: '積金局：僱員強制性供款',
+      linkMpfaUrl: 'https://www.mpfa.org.hk/tc/mpf-system/mandatory-contributions/employees',
+      linkVhis: '自願醫保計劃',
+      linkIfec: '投資者及理財教育委員會',
+      linkHkma: '香港金融管理局',
+      linkBudget: '財政預算案',
+      linkGovTax: 'GovHK：薪俸稅及個人入息課稅稅率',
+      linkGovTaxUrl: 'https://www.gov.hk/tc/residents/taxes/taxfiling/taxrates/salariesrates.htm',
+      fxRateLabel: '匯率：1 USD =',
+      fxHint: '港元與美元掛鉤，允許兑換範圍 7.75–7.85；為保障私隱，工具不會連網取得即時匯率，請按需要手動輸入',
+      fxNote: '金額以美元顯示，匯率 1 USD = {rate} HKD（輸入仍以港元）'
     },
     en: {
       brand: 'Client Wealth Check',
@@ -1724,7 +2106,7 @@
       assets: 'Total assets',
       liabilities: 'Total liabilities',
       netWorth: 'Net worth',
-      principalAxis: 'Principal (HKD)',
+      principalAxis: 'Principal',
       aprAxis: 'APR %',
       balLeft: 'Remaining debt',
       snowball: 'Snowball',
@@ -1790,7 +2172,7 @@
       carSummaryTpl: 'Vehicle cost {m}/month · {y}/year · Total vehicle value {v} (counted in assets, not retirement savings)',
       carLine: 'Vehicle costs',
       secTax: 'Salaries tax (HK)',
-      taxIntro: 'Estimated under the Inland Revenue Ordinance for year of assessment 2025/26: the lower of progressive and standard rate tax, spread monthly into expenses. Marital, children and dependent parent details come from "Personal profile".',
+      taxIntro: 'Estimated under the Inland Revenue Ordinance for year of assessment 2026/27: the lower of progressive and standard rate tax, spread monthly into expenses. Marital, children and dependent parent details come from "Personal profile".',
       taxInclude: 'Include in monthly expenses',
       optYes: 'Yes',
       optNo: 'No',
@@ -1802,7 +2184,7 @@
       taxAssessHint: '0 = auto: monthly salary (grossed up for employee MPF) ×12 + bonus + side income ×12; rental income falls under property tax and is excluded',
       taxSingleParent: 'Single parent',
       taxChildren: 'Number of children',
-      taxNewborn: 'Of which born this year',
+      taxNewborn: 'Of which under age 2',
       taxParents60: 'Dependent parents/grandparents (60+)',
       taxParents55: 'Dependent parents/grandparents (55–59)',
       taxParentsLive: 'Lived with dependent parents all year',
@@ -1812,10 +2194,10 @@
       taxHousingHint: 'Combined cap with domestic rent: HKD 100,000 (HKD 120,000 with children)',
       taxRent: 'Domestic rent (annual)',
       taxSelfEdu: 'Self-education expenses (cap 100,000)',
-      taxElderly: 'Elderly residential care (cap 100,000)',
+      taxElderly: 'Elderly residential care (cap 110,000)',
       taxDonation: 'Approved charitable donations (cap 35% of income)',
       taxReliefCap: 'One-off tax reduction cap',
-      taxReliefHint: 'Per the year\'s Budget (e.g. 2024/25: 100% reduction capped at HKD 1,500); enter 0 if unsure',
+      taxReliefHint: 'No 2026/27 tax reduction announced yet, so defaults to 0 (2025/26 was 100%, capped at HKD 3,000)',
       taxAssessable: 'Assessable income',
       taxDeductions: 'Total deductions',
       taxMpfDed: 'incl. mandatory MPF',
@@ -1865,7 +2247,7 @@
       printDocTitle: 'Client Financial Report',
       tipsTitle: 'Reference',
       tip_profile_1: 'Dependents are counted automatically from children, dependent parents and a non-earning spouse.',
-      tip_profile_2: 'Marital status affects allowances: the married person\'s allowance (HKD 264,000) applies if the spouse has no income or under joint assessment.',
+      tip_profile_2: 'Marital status affects allowances: the married person\'s allowance (HKD 290,000) applies if the spouse has no income or under joint assessment.',
       tip_profile_3: 'Target retirement age defaults to 65; adjust to the client\'s plan.',
       tip_income_1: 'Enter the full-year bonus; it is divided by 12 into monthly income.',
       tip_income_2: 'Rental income falls under property tax, not salaries tax.',
@@ -1890,7 +2272,83 @@
       tip_ins_2: 'Savings / annuity premiums count as savings, not spending.',
       tip_ins_3: 'VHIS and QDAP premiums are tax-deductible.',
       tip_goals_1: 'Goals are checked in target-year order against the monthly surplus.',
-      tip_goals_2: 'If short, consider pushing back the target year or adjusting the amount.'
+      tip_goals_2: 'If short, consider pushing back the target year or adjusting the amount.',
+      methodTitle: 'Methodology & sources',
+      methodYear: 'Rules year: 2026/27',
+      methodVerified: 'Last verified: 2026-09-28 (tax rates, allowances, tax reduction, MPF contributions)',
+      methodUnverified: 'The 2026-27 Budget changed only the elderly residential care cap; other deduction caps use current figures and have not been verified item by item.',
+      mTagVer: 'Verified: GovHK',
+      mTagVerIrd: 'Verified: IRD',
+      mTagVerMpfa: 'Verified: MPFA',
+      methodNote: 'Tax and MPF figures should be re-verified every tax year. This tool is for educational reference only; results are estimates, not financial, tax or insurance advice.',
+      mTagOff: 'Official rule',
+      mTagRot: 'Rule of thumb',
+      mTagAsm: 'Tool assumption',
+      mH1: 'Salaries tax (Inland Revenue Ordinance, Cap. 112)',
+      m1_1: 'Progressive rates: net chargeable income in bands of HKD 50,000 taxed at 2%, 6%, 10% and 14%, remainder at 17%.',
+      m1_2: 'Standard rate: 15% on the first HKD 5,000,000 of net income, 16% above; the lower of progressive and standard tax applies.',
+      m1_3: 'Allowances (2026/27): basic HKD 145,000; married HKD 290,000; single parent HKD 145,000; each child HKD 140,000 (plus HKD 140,000 if under age 2); dependent parent/grandparent aged 60+ HKD 55,000 each, aged 55–59 HKD 27,500 each, doubled if living together all year.',
+      m1_4: 'Deduction caps: mandatory MPF HKD 18,000; tax-deductible voluntary contributions (TVC) plus qualifying deferred annuity (QDAP) premiums HKD 60,000 combined; VHIS HKD 8,000 per insured person; home loan interest plus domestic rent HKD 100,000 combined (HKD 120,000 with children); self-education HKD 100,000; elderly residential care HKD 110,000 (from 2026/27); approved donations up to 35% of income after deductions.',
+      m1_5: 'Monthly salary entered is treated as net of the 5% employee MPF (per the MPFA rule in section 2) and grossed up: no gross-up below HKD 7,100 net; above HKD 30,000 gross, the contribution is capped at HKD 1,500 a month.',
+      m1_6: 'The married allowance is given only for "Married (spouse has no income / joint assessment)"; with an earning spouse the client is taxed as single (tool simplification; separate vs joint assessment is not compared).',
+      m1_7: 'Rental income falls under property tax and is excluded from the salaries tax estimate.',
+      m1_8: 'Tax reduction: 100% of tax for 2025/26, capped at HKD 3,000 per case; none announced yet for 2026/27 (usually set in the following Budget).',
+      m1_9: 'The reduction cap is an editable input defaulting to 0; enter a figure if a 2026/27 reduction is announced.',
+      mH2: 'MPF & deductions',
+      m2_1: 'Employees and employers each contribute 5% of relevant income: no employee contribution below HKD 7,100 a month, relevant income capped at HKD 30,000 (employee max HKD 1,500 a month); relevant income includes wages, salary, bonuses, commissions and allowances. The salaries tax deduction is capped at HKD 18,000 a year.',
+      m2_2: 'Each VHIS policy is treated as one insured person; its deduction is the lower of annual premium and HKD 8,000.',
+      m2_3: 'Qualifying deferred annuity policy premiums are counted automatically into the combined TVC/QDAP cap of HKD 60,000.',
+      m2_4: 'MPFA counts bonuses and commissions as relevant income, but the tool computes employee MPF from monthly salary only. As the MPF tax deduction is capped at HKD 18,000 a year, this has no effect once monthly salary reaches HKD 30,000, but it may slightly understate the MPF deduction for lower salaries with large bonuses.',
+      mH3: 'Cashflow & the 50/30/20 rule',
+      m3_1: '50/30/20 rule (Elizabeth Warren, "All Your Worth"): about 50% of income on needs, 30% on wants and 20% on savings.',
+      m3_2: 'Needs: rent or mortgage, management fee and rates, utilities, telecom, groceries, debt minimum payments, protection premiums, tax (if included in expenses), and other expenses and vehicle costs marked as essential. Wants: dining out, subscriptions, and other expenses and vehicle costs marked as discretionary.',
+      m3_3: 'Savings and annuity policy premiums count as savings, not spending; savings rate = (monthly surplus + savings premiums) ÷ total monthly income.',
+      m3_4: 'KPI ratings: surplus ≥ 0 and at least 10% of salary is good, ≥ 0 is watch, negative is alert; savings rate ≥ 20% is good, ≥ 10% is watch.',
+      mH4: 'Emergency fund',
+      m4_1: 'Target is 3–6 months of essential expenses; months covered = cash ÷ monthly essential expenses (≥ 6 good, ≥ 3 watch).',
+      m4_2: 'Monthly essential expenses are estimated automatically (can be overridden): housing, utilities, telecom, groceries, debt minimums, protection premiums, subscriptions (up to HKD 200), essential other and vehicle costs, and tax.',
+      mH5: 'Debt',
+      m5_1: 'Debt-to-income ratio (DTI) = monthly debt minimum payments ÷ total monthly income; ≤ 20% good, ≤ 36% watch, above 36% alert.',
+      m5_2: '36% is a common lending rule of thumb.',
+      m5_3: 'The HKMA mortgage debt-servicing ratio (DSR) is a different regulatory measure with its own definition and should not be compared directly with this tool\'s DTI.',
+      m5_4: 'Credit cards above 30% APR are flagged for priority repayment (tool threshold); a weighted average debt APR above 20% also triggers the debt action.',
+      m5_5: 'Snowball (smallest balance first) and avalanche (highest rate first) are simulated monthly: interest accrues, minimums are paid, and the remainder goes to the target debt; the simulation is capped at 40 years (480 months).',
+      mH6: 'Protection gap',
+      m6_1: 'Suggested life cover = annual income × 10 + annual income × 0.5 per dependent; gap = suggested cover − existing life cover (annual income = total monthly income × 12).',
+      m6_2: 'Dependents = children + dependent parents/grandparents + non-earning spouse (counted as one when "Married (spouse has no income / joint assessment)" is selected).',
+      m6_3: 'Only life policy cover is counted; death benefits of savings policies are excluded.',
+      mH7: 'Retirement',
+      m7_1: 'Assumes a 3% real annual return (after inflation): current assets compound yearly, and positive monthly surplus is invested monthly until retirement age.',
+      m7_2: 'Retirement need = 70% of current monthly income × 12 × 20 years.',
+      m7_3: 'Assets counted: cash, MPF, investments and policy cash value in full; other assets at 50%; vehicle value excluded.',
+      mH8: 'Goals',
+      m8_1: 'Monthly need = goal amount ÷ months until the target year (minimum 1 month).',
+      m8_2: 'Monthly needs are added up in target-year order and compared with the monthly surplus; goals whose cumulative need exceeds the surplus are flagged as short.',
+      mH9: 'Health score',
+      m9_1: 'Five dimensions of 20 points each, 100 in total.',
+      m9_2: 'Savings rate: ≥ 20% scores 20; ≥ 10% scores 14; ≥ 0% scores 8; negative scores 2.',
+      m9_3: 'Emergency fund months: ≥ 6 scores 20; ≥ 3 scores 14; ≥ 1 scores 8; otherwise 3.',
+      m9_4: 'Debt-to-income ratio: ≤ 20% scores 20; ≤ 36% scores 12; ≤ 50% scores 6; otherwise 2.',
+      m9_5: 'Protection gap: no gap scores 20; under 2× annual income scores 12; under 5× annual income scores 7; otherwise 3.',
+      m9_6: 'Projected ÷ needed retirement assets: ≥ 100% scores 20; ≥ 70% scores 14; ≥ 40% scores 8; otherwise 3.',
+      mH10: 'Subscriptions',
+      m10_1: 'Subscriptions are flagged for review when annual subscription spending exceeds 3% of annual income.',
+      mH11: 'Display currency',
+      m11_1: 'All inputs and calculations are in HKD; when USD is selected, output amounts are converted at the manually entered rate (default 1 USD = 7.80 HKD). The tool never fetches live exchange rates.',
+      methodLinksTitle: 'Official resources',
+      linkIrd: 'IRD: 2026-27 Budget tax measures',
+      linkIrdUrl: 'https://www.ird.gov.hk/eng/tax/budget.htm',
+      linkMpfa: 'MPFA: Mandatory contributions for employees',
+      linkMpfaUrl: 'https://www.mpfa.org.hk/en/mpf-system/mandatory-contributions/employees',
+      linkVhis: 'Voluntary Health Insurance Scheme',
+      linkIfec: 'Investor and Financial Education Council',
+      linkHkma: 'Hong Kong Monetary Authority',
+      linkBudget: 'Hong Kong Budget',
+      linkGovTax: 'GovHK: Salaries tax & personal assessment rates',
+      linkGovTaxUrl: 'https://www.gov.hk/en/residents/taxes/taxfiling/taxrates/salariesrates.htm',
+      fxRateLabel: 'Exchange rate: 1 USD =',
+      fxHint: 'The HKD is pegged to the USD within a 7.75–7.85 convertibility range. For privacy, the tool never fetches live rates; enter the rate manually as needed.',
+      fxNote: 'Amounts shown in USD at 1 USD = {rate} HKD (inputs remain in HKD)'
     }
   };
 
@@ -1932,6 +2390,8 @@
     taxElderly: 0,
     taxDonation: 0,
     taxReliefCap: 0,
+    displayCurrency: 'HKD',
+    fxRate: 7.8,
     policies: [
       { id: uid(), company: '', type: 'life', cover: 1000000, premium: 600, cashValue: 0 },
       { id: uid(), company: '', type: 'ci', cover: 500000, premium: 700, cashValue: 0 },
@@ -1970,13 +2430,47 @@
     return (I18N[lang] && I18N[lang][key]) || I18N['zh-HK'][key] || key;
   }
 
+  function isUsd() {
+    return state.displayCurrency === 'USD';
+  }
+
+  function fxRate() {
+    return state.fxRate > 0 ? state.fxRate : 7.8;
+  }
+
+  function cur() {
+    return isUsd() ? 'USD' : 'HKD';
+  }
+
+  // Display conversion only: all inputs and calculations stay in HKD
+  function conv(v) {
+    const x = Number(v) || 0;
+    return isUsd() ? x / fxRate() : x;
+  }
+
   function money(n) {
-    const v = Number(n) || 0;
+    const v = conv(n);
     const abs = Math.abs(v);
     const s = abs.toLocaleString(lang === 'en' ? 'en-HK' : 'zh-HK', {
       maximumFractionDigits: 0
     });
-    return (v < 0 ? '-' : '') + 'HKD ' + s;
+    return (v < 0 ? '-' : '') + cur() + ' ' + s;
+  }
+
+  function fmtRate() {
+    return fxRate().toFixed(2);
+  }
+
+  function renderCurrency() {
+    var usd = isUsd();
+    document.getElementById('btnHkd').classList.toggle('active', !usd);
+    document.getElementById('btnUsd').classList.toggle('active', usd);
+    document.getElementById('fxBox').hidden = !usd;
+    var note = usd ? t('fxNote').replace('{rate}', fmtRate()) : '';
+    document.getElementById('fxNote').textContent = note;
+    var line = document.getElementById('printFxLine');
+    line.textContent = note;
+    line.hidden = !usd;
   }
 
   function pct(n, digits) {
@@ -1997,6 +2491,9 @@
     });
     document.querySelectorAll('[data-i18n-placeholder]').forEach(function (el) {
       el.setAttribute('placeholder', t(el.getAttribute('data-i18n-placeholder')));
+    });
+    document.querySelectorAll('[data-i18n-href]').forEach(function (el) {
+      el.setAttribute('href', t(el.getAttribute('data-i18n-href')));
     });
     document.getElementById('btnZh').classList.toggle('active', lang === 'zh-HK');
     document.getElementById('btnEn').classList.toggle('active', lang === 'en');
@@ -2099,7 +2596,7 @@
       ins.vhisDeduction +
       Math.min(housingCap, state.taxHomeLoan + state.taxRent) +
       Math.min(100000, state.taxSelfEdu) +
-      Math.min(100000, state.taxElderly);
+      Math.min(110000, state.taxElderly);
     ded = Math.min(ded, assessable);
     var donation = Math.min(state.taxDonation, (assessable - ded) * 0.35);
     ded += Math.max(0, donation);
@@ -2107,12 +2604,12 @@
 
     var parentMult = state.taxParentsLive ? 2 : 1;
     var allowances =
-      (state.taxMarital === 1 ? 264000 : 132000) +
-      (state.taxSingleParent && state.taxMarital === 0 ? 132000 : 0) +
-      130000 * state.taxChildren +
-      130000 * Math.min(state.taxNewborn, state.taxChildren) +
-      50000 * parentMult * state.taxParents60 +
-      25000 * parentMult * state.taxParents55;
+      (state.taxMarital === 1 ? 290000 : 145000) +
+      (state.taxSingleParent && state.taxMarital === 0 ? 145000 : 0) +
+      140000 * state.taxChildren +
+      140000 * Math.min(state.taxNewborn, state.taxChildren) +
+      55000 * parentMult * state.taxParents60 +
+      27500 * parentMult * state.taxParents55;
 
     var nci = Math.max(0, netIncome - allowances);
     var prog = progressiveTax(nci);
@@ -2665,7 +3162,7 @@
     var exp = ensureChart('chartExpense');
     var parts = r.expenseParts.filter(function (p) { return p.value > 0; });
     exp.setOption({
-      tooltip: { trigger: 'item', formatter: '{b}: HKD {c} ({d}%)' },
+      tooltip: { trigger: 'item', formatter: function (p) { return esc(p.name) + ': ' + money(p.value) + ' (' + p.percent + '%)'; } },
       color: [CHART.navy, CHART.gold, CHART.slate, CHART.teal, CHART.sand, CHART.grey, CHART.burgundy, CHART.green, '#7E8CA3'],
       series: [{
         type: 'pie',
@@ -2678,20 +3175,21 @@
 
     var debtC = ensureChart('chartDebt');
     var labels = state.debts.map(function (d) { return d.creditor || t('item'); });
+    var principalName = t('principalAxis') + ' (' + cur() + ')';
     debtC.setOption({
       tooltip: { trigger: 'axis' },
-      legend: { data: [t('principalAxis'), t('aprAxis')], bottom: 0, textStyle: { fontSize: 11 } },
+      legend: { data: [principalName, t('aprAxis')], bottom: 0, textStyle: { fontSize: 11 } },
       grid: { left: 50, right: 50, top: 30, bottom: 40 },
       xAxis: { type: 'category', data: labels.length ? labels : [t('noDebt')], axisLabel: { fontSize: 10 } },
       yAxis: [
-        { type: 'value', name: t('principalAxis'), axisLabel: { fontSize: 10 } },
+        { type: 'value', name: principalName, axisLabel: { fontSize: 10 } },
         { type: 'value', name: t('aprAxis'), axisLabel: { formatter: '{value}%', fontSize: 10 } }
       ],
       series: [
         {
-          name: t('principalAxis'),
+          name: principalName,
           type: 'bar',
-          data: state.debts.map(function (d) { return n(d.principal); }),
+          data: state.debts.map(function (d) { return Math.round(conv(n(d.principal))); }),
           itemStyle: { color: CHART.navy, borderRadius: [6, 6, 0, 0] }
         },
         {
@@ -2710,7 +3208,7 @@
     var xData = [];
     for (var i = 0; i < maxLen; i++) xData.push(i);
     function pad(series) {
-      var out = series.slice();
+      var out = series.map(function (v) { return Math.round(conv(v)); });
       while (out.length < maxLen) out.push(0);
       return out;
     }
@@ -2719,7 +3217,7 @@
       legend: { data: [t('snowball'), t('avalanche')], bottom: 0, textStyle: { fontSize: 11 } },
       grid: { left: 55, right: 20, top: 30, bottom: 40 },
       xAxis: { type: 'category', data: xData, name: t('months'), axisLabel: { fontSize: 10, interval: Math.max(0, Math.floor(maxLen / 6) - 1) } },
-      yAxis: { type: 'value', name: t('balLeft'), axisLabel: { fontSize: 10 } },
+      yAxis: { type: 'value', name: t('balLeft') + ' (' + cur() + ')', axisLabel: { fontSize: 10 } },
       series: [
         { name: t('snowball'), type: 'line', showSymbol: false, data: pad(r.snow.series), itemStyle: { color: CHART.navy }, areaStyle: { color: 'rgba(11,31,58,0.06)' } },
         { name: t('avalanche'), type: 'line', showSymbol: false, data: pad(r.ava.series), itemStyle: { color: CHART.gold }, areaStyle: { color: 'rgba(184,151,90,0.10)' } }
@@ -2735,13 +3233,13 @@
       series: [{
         type: 'bar',
         data: [
-          { value: Math.round(r.assets), itemStyle: { color: CHART.green } },
-          { value: Math.round(r.debtPrincipal), itemStyle: { color: CHART.burgundy } },
-          { value: Math.round(r.netWorth), itemStyle: { color: CHART.navy } }
+          { value: Math.round(conv(r.assets)), itemStyle: { color: CHART.green } },
+          { value: Math.round(conv(r.debtPrincipal)), itemStyle: { color: CHART.burgundy } },
+          { value: Math.round(conv(r.netWorth)), itemStyle: { color: CHART.navy } }
         ],
         barWidth: 42,
         itemStyle: { borderRadius: [6, 6, 0, 0] },
-        label: { show: true, position: 'top', fontSize: 10, formatter: function (p) { return 'HKD ' + Number(p.value).toLocaleString(); } }
+        label: { show: true, position: 'top', fontSize: 10, formatter: function (p) { return cur() + ' ' + Number(p.value).toLocaleString(); } }
       }]
     }, true);
   }
@@ -2810,6 +3308,7 @@
 
   function recalculate() {
     var r = compute();
+    renderCurrency();
     renderDependents();
     renderCarMeta(r);
     renderTaxMeta(r);
@@ -3063,6 +3562,25 @@
       lang = 'en';
       applyI18n();
     });
+    document.getElementById('btnHkd').addEventListener('click', function () {
+      state.displayCurrency = 'HKD';
+      recalculate();
+    });
+    document.getElementById('btnUsd').addEventListener('click', function () {
+      state.displayCurrency = 'USD';
+      recalculate();
+    });
+    var fxInput = document.getElementById('fxRate');
+    fxInput.addEventListener('input', function () {
+      var v = n(fxInput.value);
+      if (v >= 7 && v <= 8.5) {
+        state.fxRate = v;
+        recalculate();
+      }
+    });
+    fxInput.addEventListener('change', function () {
+      fxInput.value = fmtRate();
+    });
 
     document.getElementById('formRoot').addEventListener('input', function (e) {
       var el = e.target;
@@ -3291,6 +3809,9 @@
       state.taxElderly = 0;
       state.taxDonation = 0;
       state.taxReliefCap = 0;
+      state.displayCurrency = 'HKD';
+      state.fxRate = 7.8;
+      document.getElementById('fxRate').value = '7.80';
       state.age = 35;
       state.dependents = 0;
       state.essentialOverride = 0;
