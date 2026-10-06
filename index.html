@@ -1,16 +1,72 @@
 <!DOCTYPE html>
+<!--
+  ════════════════════════════════════════════════════════════════════
+  Firebase 設定步驟（Setup guide）
+  ════════════════════════════════════════════════════════════════════
+  (a) 到 https://console.firebase.google.com 建立 Firebase 專案，
+      專案 ID（Project ID）= nikifin。預設網站網址為 https://nikifintech-wealth.web.app
+
+  (b) Authentication > Sign-in method：啟用「Email/Password」及「Google」。
+
+  (c) 建立 Firestore Database。建立完成後，把安全規則（Rules）完全取代為：
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /loginLogs/{userId} {
+      allow create, update: if request.auth != null && request.auth.uid == userId;
+      allow read: if request.auth.token.email == "yukyiuwan@gmail.com";
+    }
+    match /usage_logs/{logId} {
+      allow create: if request.auth != null;
+      allow read: if request.auth.token.email == "yukyiuwan@gmail.com";
+    }
+  }
+}
+
+      註：usage_logs 只記錄 uid、email、action、timestamp，永不寫入任何財務數字。
+      管理員面板讀取 loginLogs（登入用戶數）及 usage_logs（按 action 點算）。
+      usage_logs 的 create 規則只要求已登入，舊有登入紀錄寫入的欄位亦可通過。
+      以上只是範例，並未自動發佈：Hosting 部署不會發佈規則，請在 Firebase Console
+      > Firestore > Rules 貼上並按「發佈」，否則管理員面板讀取會出現 permission-denied。
+
+  (d) Project settings > General > Your apps：複製 firebaseConfig，
+      貼到下方 <script> 開頭標明「CONFIG」的區塊，取代 PASTE_ 開頭的佔位值。
+      （已完成：project nikifintech-wealth 的 config 已填入。）
+
+  (e) Firebase Hosting 預設網站網址：https://nikifintech-wealth.web.app
+
+  (f) Authentication > Settings > Authorized domains：加入 nikifintech-wealth.web.app
+
+  Mac Terminal 部署指令：
+    1. 先安裝 Node.js（https://nodejs.org），然後執行：
+         npm install -g firebase-tools
+    2. firebase login
+    3. cd 到此專案資料夾，例如：
+         cd "/Users/nikiisgenevieve/Desktop/financial tool"
+    4. firebase deploy --only hosting --project nikifin
+
+  注意：CONFIG 區塊內的 PASTE_ 佔位值是刻意保留的。請只在本機貼上真實金鑰；
+  如果此 repo 會與他人共用，請不要 commit 真實的 API keys。
+  私隱：所有財務數字只存在瀏覽器記憶體（state 物件），
+  永不寫入 Firestore、Auth、localStorage、sessionStorage、IndexedDB 或 Cookie。
+  ════════════════════════════════════════════════════════════════════
+-->
 <html lang="zh-HK">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="robots" content="noindex, nofollow" />
-  <meta name="referrer" content="no-referrer" />
+  <meta name="referrer" content="strict-origin-when-cross-origin" />
   <title>HK Client Wealth Check · 客戶理財診斷</title>
-  <!-- Only allowed external resources: fonts + ECharts -->
+  <!-- External resources: fonts + ECharts + Firebase (login & usage log only; no financial data) -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600;700&family=Source+Sans+3:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.1/dist/echarts.min.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/11.10.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/11.10.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore-compat.js"></script>
   <style>
     :root {
       --bg0: #f7f5f0;
@@ -770,7 +826,13 @@
       details.method > summary { font-size: 18px; padding: 16px 22px; }
       .method-body { padding: 16px 22px 22px; gap: 14px; }
       .method-meta { font-size: 14px; }
-      .method-groups { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px 22px; }
+      .method-groups { display: block; column-count: 2; column-gap: 22px; }
+      .method-groups > .method-group {
+        break-inside: avoid;
+        page-break-inside: avoid;
+        -webkit-column-break-inside: avoid;
+        margin-bottom: 14px;
+      }
       .method-group h3 { font-size: 15px; }
       .method-group ul > li { font-size: 14px; }
       .method-links ul { grid-template-columns: repeat(3, minmax(0, 1fr)); }
@@ -780,6 +842,283 @@
     @media screen and (min-width: 1280px) {
       .grid-2 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
       .dyn-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+
+    .site-header {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+    .site-header .nav { position: relative; }
+    .brand { cursor: default; -webkit-tap-highlight-color: transparent; }
+    .userbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 6px 16px;
+      background: var(--brand);
+      color: #e9edf3;
+      font-size: 12px;
+      border-bottom: 1px solid var(--accent);
+    }
+    .userbar[hidden] { display: none; }
+    .userbar-info {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 2px 14px;
+      min-width: 0;
+    }
+    .userbar-email {
+      font-weight: 700;
+      color: #fff;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      max-width: 100%;
+    }
+    .userbar-last { color: #d7c39c; white-space: nowrap; }
+    .userbar .btn-sm {
+      background: transparent;
+      color: #fff;
+      border: 1px solid rgba(184, 151, 90, 0.7);
+      flex-shrink: 0;
+    }
+    .userbar .btn-sm:hover { background: rgba(255, 255, 255, 0.08); }
+
+    .auth-screen {
+      display: grid;
+      place-items: start center;
+      padding: 28px 16px 12px;
+      min-height: calc(100vh - var(--nav-h) - 140px);
+    }
+    .auth-screen[hidden] { display: none; }
+    .auth-card {
+      width: 100%;
+      max-width: 440px;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      box-shadow: 0 2px 4px rgba(11, 31, 58, 0.05), 0 18px 48px rgba(11, 31, 58, 0.1);
+      overflow: hidden;
+    }
+    .auth-card[hidden] { display: none; }
+    .auth-head {
+      padding: 22px 22px 18px;
+      background: linear-gradient(135deg, var(--brand-deep), var(--brand) 70%, #16335c);
+      border-bottom: 2px solid var(--accent);
+      color: #fff;
+    }
+    .auth-head h1 {
+      margin: 0;
+      font-size: 21px;
+      color: #fff;
+      letter-spacing: 0.01em;
+    }
+    .auth-head p {
+      margin: 6px 0 0;
+      font-size: 13px;
+      color: #d7c39c;
+    }
+    .auth-body {
+      display: grid;
+      gap: 14px;
+      padding: 20px 22px 22px;
+      background: linear-gradient(180deg, #fff, var(--surface-2));
+    }
+    .auth-body .alert[hidden] { display: none; }
+    .auth-notice {
+      margin: 0;
+      padding: 10px 12px;
+      font-size: 13px;
+      line-height: 1.55;
+      color: var(--ink-soft);
+      background: var(--accent-soft);
+      border: 1px solid #e3d3b0;
+      border-left: 3px solid var(--accent);
+      border-radius: 10px;
+    }
+    .link-btn {
+      display: inline;
+      padding: 0;
+      border: none;
+      background: none;
+      color: var(--brand);
+      font-weight: 700;
+      cursor: pointer;
+      text-decoration: underline;
+      text-decoration-color: var(--accent);
+      text-underline-offset: 3px;
+    }
+    .link-btn:focus-visible { outline: none; box-shadow: var(--focus-ring); border-radius: 4px; }
+    .btn-block {
+      width: 100%;
+      min-height: 46px;
+      justify-content: center;
+      font-size: 15px;
+    }
+    .btn-google {
+      background: #fff;
+      color: var(--ink);
+      border: 1px solid var(--line-strong);
+      box-shadow: 0 1px 2px rgba(11, 31, 58, 0.06);
+    }
+    .btn-google:hover { background: var(--surface-2); border-color: var(--accent); }
+    .btn[disabled] { opacity: 0.6; cursor: progress; }
+    .auth-divider {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--muted);
+    }
+    .auth-divider::before,
+    .auth-divider::after {
+      content: "";
+      flex: 1;
+      height: 1px;
+      background: var(--line-strong);
+    }
+    .auth-form { display: grid; gap: 12px; }
+    .auth-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    .auth-actions .btn { justify-content: center; min-height: 46px; font-size: 15px; }
+    .auth-foot {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+      font-size: 13px;
+    }
+    .auth-msg { margin: 0; }
+    .auth-msg:empty { display: none; }
+    .verify-email { font-weight: 700; color: var(--ink); overflow-wrap: anywhere; }
+
+    .admin-panel { margin-bottom: 16px; border-color: var(--accent); }
+    .admin-panel[hidden] { display: none; }
+    .admin-stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+    .admin-stats .kpi { min-height: 0; padding: 10px 12px; border-color: var(--accent); background: var(--surface-2); }
+    .admin-stats .kpi .label { font-size: 12px; margin-bottom: 4px; }
+    .admin-stats .kpi .value { font-size: 22px; font-weight: 800; }
+    .admin-sub { margin: 4px 0 8px; font-size: 14px; }
+    .admin-note { margin: 0 0 12px; font-size: 12px; color: var(--muted); }
+    .admin-table-wrap { overflow: auto; max-height: 420px; border: 1px solid var(--line); border-radius: 8px; }
+    .admin-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+      font-variant-numeric: tabular-nums;
+    }
+    .admin-table th,
+    .admin-table td {
+      padding: 8px 10px;
+      border-bottom: 1px solid var(--line);
+      text-align: left;
+      white-space: nowrap;
+    }
+    .admin-table th { position: sticky; top: 0; color: var(--ink); background: var(--surface-2); font-weight: 700; }
+
+    .footer-links { margin: 8px 0 0; }
+
+    .modal {
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      display: grid;
+      place-items: center;
+      padding: 16px;
+    }
+    .modal[hidden] { display: none; }
+    .modal-backdrop {
+      position: absolute;
+      inset: 0;
+      background: rgba(6, 20, 42, 0.62);
+      backdrop-filter: blur(2px);
+    }
+    .modal-dialog {
+      position: relative;
+      width: 100%;
+      max-width: 620px;
+      max-height: calc(100vh - 32px);
+      max-height: calc(100dvh - 32px);
+      display: flex;
+      flex-direction: column;
+      background: #fffdf8;
+      border: 1px solid var(--accent);
+      border-radius: 16px;
+      box-shadow: 0 24px 64px rgba(6, 20, 42, 0.35);
+      overflow: hidden;
+    }
+    .modal-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 16px 18px;
+      background: var(--brand);
+      border-bottom: 2px solid var(--accent);
+    }
+    .modal-head h2 { margin: 0; font-size: 17px; color: #fff; }
+    .modal-head p { margin: 4px 0 0; font-size: 12px; color: #d7c39c; }
+    .modal-close {
+      flex-shrink: 0;
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      border: 1px solid rgba(184, 151, 90, 0.7);
+      background: transparent;
+      color: #fff;
+      font-size: 20px;
+      line-height: 1;
+      cursor: pointer;
+    }
+    .modal-close:hover { background: rgba(255, 255, 255, 0.1); }
+    .modal-close:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+    .modal-body {
+      padding: 16px 18px;
+      overflow-y: auto;
+      font-size: 14px;
+      line-height: 1.65;
+      color: var(--ink-soft);
+    }
+    .modal-body h3 {
+      margin: 14px 0 4px;
+      font-size: 14px;
+      color: var(--ink);
+    }
+    .modal-body h3:first-child { margin-top: 0; }
+    .modal-body p { margin: 0; }
+    .modal-body a {
+      color: var(--brand);
+      font-weight: 600;
+      text-decoration-color: var(--accent);
+      text-underline-offset: 3px;
+    }
+    .modal-foot {
+      display: flex;
+      justify-content: flex-end;
+      padding: 12px 18px;
+      border-top: 1px solid var(--line);
+      background: #fff;
+    }
+    body.modal-open { overflow: hidden; }
+
+    @media (max-width: 520px) {
+      .auth-screen { padding: 16px 12px 8px; }
+      .auth-head { padding: 18px 16px 14px; }
+      .auth-body { padding: 16px; }
+      .userbar { padding: 6px 12px; }
     }
 
     .print-only { display: none; }
@@ -810,6 +1149,12 @@
       .privacy-pill { font-size: 8pt; padding: 3px 8px; max-width: none; }
       .privacy-pill span { display: inline; }
 
+      .site-header { position: static; }
+      .userbar,
+      .auth-screen,
+      .admin-panel,
+      .modal,
+      .footer-links,
       .lang-toggle,
       .fx-box,
       .btn,
@@ -972,8 +1317,9 @@
   </style>
 </head>
 <body>
-  <header class="nav">
-    <div class="brand">
+  <header class="site-header">
+  <div class="nav">
+    <div class="brand" id="brandLogo">
       <div class="brand-mark" aria-hidden="true">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
           <path d="M4 18V8l8-4 8 4v10" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
@@ -1002,9 +1348,128 @@
         <button type="button" id="btnUsd">USD</button>
       </div>
     </div>
+  </div>
+  <div class="userbar" id="userBar" hidden>
+    <div class="userbar-info">
+      <span class="userbar-email" id="userEmail"></span>
+      <span class="userbar-last"><span data-i18n="lastLoginLabel">上次登入：</span><span id="lastLoginValue"></span></span>
+    </div>
+    <button type="button" class="btn btn-sm" id="btnLogout" data-i18n="logout">登出</button>
+  </div>
   </header>
 
-  <main class="wrap">
+  <section class="auth-screen" id="authScreen" aria-live="polite">
+    <div class="auth-card" id="authLoginCard">
+      <div class="auth-head">
+        <h1 data-i18n="authTitle">登入理財健康檢查</h1>
+        <p data-i18n="authSub">登入後即可使用客戶理財診斷工具</p>
+      </div>
+      <div class="auth-body">
+        <p class="alert alert-warn" id="authConfigNote" hidden data-i18n="authConfigMissing">Firebase 金鑰尚未貼上，暫時無法完成登入。</p>
+        <p class="auth-notice">
+          <span data-i18n="loginNoticePre">登入即代表你同意</span><button type="button" class="link-btn" data-open-privacy data-i18n="loginNoticeLink">私隱政策</button><span data-i18n="loginNoticePost">。你的財務數字會在瀏覽器本地計算，不會上傳。</span>
+        </p>
+        <p class="auth-notice" data-i18n="authDomainNote">登入認證由 Firebase（Google）提供，登入彈窗會顯示 nikifintech-wealth.firebaseapp.com，屬於本工具安全認證域名，並非第三方網站。</p>
+        <button type="button" class="btn btn-google btn-block" id="btnGoogle">
+          <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true">
+            <path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9.1 3.6l6.8-6.8C35.8 2.4 30.3 0 24 0 14.6 0 6.6 5.4 2.7 13.3l7.9 6.1C12.5 13.6 17.8 9.5 24 9.5z"/>
+            <path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.7c-.6 3-2.3 5.5-4.8 7.2l7.7 6c4.5-4.2 6.9-10.3 6.9-17.7z"/>
+            <path fill="#FBBC05" d="M10.6 28.6c-.5-1.4-.8-3-.8-4.6s.3-3.2.8-4.6l-7.9-6.1C1 16.6 0 20.2 0 24s1 7.4 2.7 10.7l7.9-6.1z"/>
+            <path fill="#34A853" d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.7-6c-2.1 1.4-4.9 2.3-8.2 2.3-6.2 0-11.5-4.1-13.4-9.8l-7.9 6.1C6.6 42.6 14.6 48 24 48z"/>
+          </svg>
+          <span data-i18n="authGoogle">使用 Google 登入</span>
+        </button>
+        <div class="auth-divider" data-i18n="authOr">或使用電郵</div>
+        <form class="auth-form" id="authForm" novalidate>
+          <label class="field">
+            <span data-i18n="authName">顯示名稱（選填，註冊時使用）</span>
+            <input type="text" id="authName" autocomplete="name" maxlength="80" />
+          </label>
+          <label class="field">
+            <span data-i18n="authEmail">電郵</span>
+            <input type="email" id="authEmail" autocomplete="email" inputmode="email" required />
+          </label>
+          <label class="field">
+            <span data-i18n="authPassword">密碼</span>
+            <input type="password" id="authPassword" autocomplete="current-password" minlength="6" required />
+          </label>
+          <div class="auth-actions">
+            <button type="submit" class="btn btn-primary" id="btnSignIn" data-i18n="authSignIn">登入</button>
+            <button type="button" class="btn btn-ghost" id="btnSignUp" data-i18n="authSignUp">註冊</button>
+          </div>
+          <div class="auth-foot">
+            <button type="button" class="link-btn" id="btnForgot" data-i18n="authForgot">忘記密碼？</button>
+          </div>
+        </form>
+        <p class="alert auth-msg" id="authMsg" role="status"></p>
+      </div>
+    </div>
+
+    <div class="auth-card" id="authVerifyCard" hidden>
+      <div class="auth-head">
+        <h1 data-i18n="verifyTitle">請驗證你的電郵</h1>
+        <p data-i18n="verifySub">驗證後即可使用工具</p>
+      </div>
+      <div class="auth-body">
+        <p style="margin:0;"><span data-i18n="verifyBody">我們已發送驗證連結到：</span><br /><span class="verify-email" id="verifyEmail"></span></p>
+        <p class="inline-note" data-i18n="verifyHint">請打開電郵內的連結，然後按「我已完成驗證」。如找不到，請查看垃圾郵件。</p>
+        <button type="button" class="btn btn-primary btn-block" id="btnVerified" data-i18n="verifyDone">我已完成驗證</button>
+        <div class="auth-actions">
+          <button type="button" class="btn btn-ghost" id="btnResend" data-i18n="verifyResend">重新發送電郵</button>
+          <button type="button" class="btn btn-ghost" id="btnVerifyLogout" data-i18n="logout">登出</button>
+        </div>
+        <p class="alert auth-msg" id="verifyMsg" role="status"></p>
+      </div>
+    </div>
+  </section>
+
+  <main class="wrap" id="appMain" hidden>
+    <section class="panel admin-panel" id="adminPanel" hidden aria-labelledby="adminTitle">
+      <div class="panel-head">
+        <h2 class="panel-title" id="adminTitle" data-i18n="adminTitle">管理員統計</h2>
+        <div class="panel-actions">
+          <button type="button" class="btn btn-ghost btn-sm" id="btnAdminRefresh" data-i18n="adminRefresh">刷新數據</button>
+          <button type="button" class="btn btn-ghost btn-sm" id="btnAdminClose" data-i18n="close">關閉</button>
+        </div>
+      </div>
+      <div class="panel-body">
+        <p class="admin-note" data-i18n="adminNote">紀錄不會儲存任何用戶收支或財務數字。</p>
+        <p class="alert auth-msg" id="adminStatus" role="status"></p>
+        <h3 class="panel-title admin-sub" data-i18n="adminLoginTitle">登入統計</h3>
+        <div class="admin-stats">
+          <div class="kpi"><div class="label" data-i18n="adminUV">總獨立用戶數 UV</div><div class="value" id="adminUV">—</div></div>
+          <div class="kpi"><div class="label" data-i18n="adminLogin7d">最近7天登入人數</div><div class="value" id="adminLogin7d">—</div></div>
+          <div class="kpi"><div class="label" data-i18n="adminLoginToday">今日登入次數</div><div class="value" id="adminLoginToday">—</div></div>
+        </div>
+        <h3 class="panel-title admin-sub" data-i18n="adminUsageTitle">功能使用（累計）</h3>
+        <div class="admin-stats">
+          <div class="kpi"><div class="label" data-i18n="adminOpenCalc">開啟計算機次數</div><div class="value" id="adminOpenCalc">—</div></div>
+          <div class="kpi"><div class="label" data-i18n="adminGenReport">生成報告次數</div><div class="value" id="adminGenReport">—</div></div>
+          <div class="kpi"><div class="label" data-i18n="adminExportPdf">匯出 PDF 次數</div><div class="value" id="adminExportPdf">—</div></div>
+        </div>
+        <h3 class="panel-title admin-sub" data-i18n="adminUsage7dTitle">功能使用（最近7天）</h3>
+        <div class="admin-stats">
+          <div class="kpi"><div class="label" data-i18n="adminOpenCalc">開啟計算機次數</div><div class="value" id="adminOpenCalc7d">—</div></div>
+          <div class="kpi"><div class="label" data-i18n="adminGenReport">生成報告次數</div><div class="value" id="adminGenReport7d">—</div></div>
+          <div class="kpi"><div class="label" data-i18n="adminExportPdf">匯出 PDF 次數</div><div class="value" id="adminExportPdf7d">—</div></div>
+        </div>
+        <h3 class="panel-title admin-sub" data-i18n="adminLogsTitle">原始紀錄（最新在前）</h3>
+        <div class="admin-table-wrap">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th data-i18n="adminColTime">時間</th>
+                <th data-i18n="adminColUid">uid</th>
+                <th data-i18n="adminColEmail">email</th>
+                <th data-i18n="adminColAction">action</th>
+              </tr>
+            </thead>
+            <tbody id="adminRows"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
     <div class="print-only print-head">
       <div>
         <h1 data-i18n="printTitle">客戶理財診斷報告</h1>
@@ -1583,20 +2048,77 @@
         </div>
       </div>
     </details>
-
-    <footer class="footer">
-      <p data-i18n="disclaimer">
-        免責聲明：此工具只作教育參考，不構成任何財務、保險專業建議。所有客戶數據僅在此瀏覽器內存運算，重整或關閉頁面後即消失，不會上傳或儲存至任何伺服器。
-      </p>
-      <p style="margin-top:8px;" data-i18n="privacyTag">客戶數據不會離開此瀏覽器</p>
-    </footer>
   </main>
+
+  <footer class="footer">
+    <p data-i18n="disclaimer">
+      免責聲明：此工具只作教育參考，不構成任何財務、保險專業建議。所有客戶數據僅在此瀏覽器內存運算，重整或關閉頁面後即消失，不會上傳或儲存至任何伺服器。
+    </p>
+    <p style="margin-top:8px;" data-i18n="privacyTag">客戶數據不會離開此瀏覽器</p>
+    <p class="footer-links"><button type="button" class="link-btn" id="footerPrivacy" data-open-privacy>Privacy / 私隱政策</button></p>
+  </footer>
+
+  <div class="modal" id="privacyModal" hidden>
+    <div class="modal-backdrop" data-close-privacy></div>
+    <div class="modal-dialog" role="dialog" aria-modal="true" aria-labelledby="ppTitle">
+      <div class="modal-head">
+        <div>
+          <h2 id="ppTitle" data-i18n="ppTitle">理財健康檢查 — 私隱政策</h2>
+          <p data-i18n="ppUpdated">最後更新：2026 年 9 月 28 日</p>
+        </div>
+        <button type="button" class="modal-close" id="privacyClose" data-close-privacy aria-label="Close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <h3 data-i18n="ppH1"></h3>
+        <p data-i18n="ppB1"></p>
+        <h3 data-i18n="ppH2"></h3>
+        <p data-i18n="ppB2"></p>
+        <h3 data-i18n="ppH3"></h3>
+        <p data-i18n="ppB3"></p>
+        <h3 data-i18n="ppH4"></h3>
+        <p data-i18n="ppB4"></p>
+        <h3 data-i18n="ppH5"></h3>
+        <p data-i18n="ppB5"></p>
+        <p><span data-i18n="ppContact"></span><a href="mailto:yukyiuwan@gmail.com">yukyiuwan@gmail.com</a></p>
+        <p><span data-i18n="ppWebsite"></span><a href="https://nikifintech-wealth.web.app" target="_blank" rel="noopener noreferrer">https://nikifintech-wealth.web.app</a></p>
+        <h3 data-i18n="ppH6"></h3>
+        <p data-i18n="ppB6"></p>
+        <p data-i18n="ppAuthDomain"></p>
+      </div>
+      <div class="modal-foot">
+        <button type="button" class="btn btn-primary" data-close-privacy data-i18n="close">關閉</button>
+      </div>
+    </div>
+  </div>
 
   <script>
 (function () {
   'use strict';
 
+  // ╔══════════════════════════════════════════════════════════════════╗
+  // ║ CONFIG — Firebase keys                                           ║
+  // ║ Firebase Console > Project settings (齒輪) > General >            ║
+  // ║ "Your apps" > Web app > SDK setup and configuration > Config.    ║
+  // ║ Paste each value over the matching PASTE_ placeholder below.     ║
+  // ║ Until apiKey is pasted, the login screen shows a "keys not       ║
+  // ║ pasted" note and sign-in cannot complete.                        ║
+  // ║ Config for project nikifintech-wealth is already filled in.      ║
+  // ║ measurementId is unused: Firebase Analytics is NOT loaded.       ║
+  // ╚══════════════════════════════════════════════════════════════════╝
+  const firebaseConfig = {
+    apiKey: "AIzaSyBHt0kzI9z2dS0_Eo4EV8Q4n6hh9kcGa_o",
+    authDomain: "nikifintech-wealth.firebaseapp.com",
+    projectId: "nikifintech-wealth",
+    storageBucket: "nikifintech-wealth.firebasestorage.app",
+    messagingSenderId: "703290648279",
+    appId: "1:703290648279:web:550637f46d71fdc9403292",
+    measurementId: "G-6PZ0Z3L6H2"
+  };
+  const ADMIN_EMAIL = 'yukyiuwan@gmail.com';
+  // ═══════════════════════════ END CONFIG ═════════════════════════════
+
   // —— Privacy: memory-only state; no persistent browser storage or cookies ——
+  // Firebase is used only for login, loginLogs and the usage_logs events in logEvent().
   const CURRENT_YEAR = new Date().getFullYear();
 
   const I18N = {
@@ -1973,7 +2495,85 @@
       linkGovTaxUrl: 'https://www.gov.hk/tc/residents/taxes/taxfiling/taxrates/salariesrates.htm',
       fxRateLabel: '匯率：1 USD =',
       fxHint: '港元與美元掛鉤，允許兑換範圍 7.75–7.85；為保障私隱，工具不會連網取得即時匯率，請按需要手動輸入',
-      fxNote: '金額以美元顯示，匯率 1 USD = {rate} HKD（輸入仍以港元）'
+      fxNote: '金額以美元顯示，匯率 1 USD = {rate} HKD（輸入仍以港元）',
+      lastLoginLabel: '上次登入：',
+      logout: '登出',
+      close: '關閉',
+      authTitle: '登入理財健康檢查',
+      authSub: '登入後即可使用客戶理財診斷工具',
+      authConfigMissing: 'Firebase 金鑰尚未貼上（CONFIG 區塊），暫時無法完成登入。',
+      loginNoticePre: '登入即代表你同意',
+      loginNoticeLink: '私隱政策',
+      loginNoticePost: '。你的財務數字會在瀏覽器本地計算，不會上傳。',
+      authDomainNote: '登入認證由 Firebase（Google）提供，登入彈窗會顯示 nikifintech-wealth.firebaseapp.com，屬於本工具安全認證域名，並非第三方網站。',
+      authGoogle: '使用 Google 登入',
+      authOr: '或使用電郵',
+      authName: '顯示名稱（選填，註冊時使用）',
+      authEmail: '電郵',
+      authPassword: '密碼',
+      authSignIn: '登入',
+      authSignUp: '註冊',
+      authForgot: '忘記密碼？',
+      authNeedEmail: '請輸入有效的電郵地址。',
+      authNeedPassword: '請輸入最少 6 個字元的密碼。',
+      authResetSent: '如該電郵已註冊，重設密碼連結已發送，請查看收件匣。',
+      authSignUpSent: '註冊成功，驗證電郵已發送。',
+      errInvalidEmail: '電郵格式不正確。',
+      errBadLogin: '電郵或密碼不正確。',
+      errEmailInUse: '此電郵已被註冊，請直接登入。',
+      errWeakPassword: '密碼太弱，請使用最少 6 個字元。',
+      errTooMany: '嘗試次數過多，請稍後再試。',
+      errNetwork: '網絡連線失敗，請檢查網絡後再試。',
+      errPopupClosed: '登入視窗已關閉，未完成登入。',
+      errNotEnabled: '此登入方式尚未在 Firebase 啟用。',
+      errDomain: '此網域未獲授權，請在 Firebase Authorized domains 加入。',
+      errGeneric: '登入失敗，請稍後再試。',
+      verifyTitle: '請驗證你的電郵',
+      verifySub: '驗證後即可使用工具',
+      verifyBody: '我們已發送驗證連結到：',
+      verifyHint: '請打開電郵內的連結，然後按「我已完成驗證」。如找不到，請查看垃圾郵件。',
+      verifyDone: '我已完成驗證',
+      verifyResend: '重新發送電郵',
+      verifyResent: '驗證電郵已重新發送。',
+      verifyNotYet: '電郵仍未驗證，請先打開電郵內的連結。',
+      adminTitle: '管理員統計',
+      adminRefresh: '刷新數據',
+      adminNote: '紀錄不會儲存任何用戶收支或財務數字。',
+      adminLoginTitle: '登入統計',
+      adminUV: '總獨立用戶數 UV',
+      adminLogin7d: '最近7天登入人數',
+      adminLoginToday: '今日登入次數',
+      adminUsageTitle: '功能使用（累計）',
+      adminUsage7dTitle: '功能使用（最近7天）',
+      adminOpenCalc: '開啟計算機次數',
+      adminGenReport: '生成報告次數',
+      adminExportPdf: '匯出 PDF 次數',
+      adminLogsTitle: '原始紀錄（最新在前）',
+      adminColTime: '時間',
+      adminColUid: 'uid',
+      adminColEmail: 'email',
+      adminColAction: 'action',
+      adminActionLogin: '登入',
+      adminLoading: '載入統計中…',
+      adminEmpty: '暫無紀錄',
+      adminError: '載入統計失敗',
+      ppTitle: '理財健康檢查 — 私隱政策',
+      ppUpdated: '最後更新：2026 年 9 月 28 日',
+      ppH1: '1. 收集資料',
+      ppB1: '登入時收集你的電郵地址、顯示名稱、登入時間、瀏覽器及裝置資訊。',
+      ppH2: '2. 不會收集的資料',
+      ppB2: '你輸入的所有財務數字會在瀏覽器本地運算，永遠不會上傳或儲存到Firebase伺服器。',
+      ppH3: '3. 資料用途',
+      ppB3: '帳號身份驗證、統計工具使用次數。我們不會出售或分享你的個人資料作市場推廣用途。',
+      ppH4: '4. 資料保留',
+      ppB4: '帳號及登入紀錄會在帳號生效期間保留，你可隨時要求刪除個人資料。',
+      ppH5: '5. 你的權利',
+      ppB5: '你有權查閱、更正或刪除你的個人資料。',
+      ppContact: '聯絡：',
+      ppWebsite: '網站：',
+      ppH6: '6. Cookie',
+      ppB6: '只使用維持登入必要Cookie，沒有廣告追蹤Cookie。',
+      ppAuthDomain: '登入認證由 Firebase（Google）提供，登入彈窗會顯示 nikifintech-wealth.firebaseapp.com，屬於本工具安全認證域名，並非第三方網站。'
     },
     en: {
       brand: 'Client Wealth Check',
@@ -2348,7 +2948,85 @@
       linkGovTaxUrl: 'https://www.gov.hk/en/residents/taxes/taxfiling/taxrates/salariesrates.htm',
       fxRateLabel: 'Exchange rate: 1 USD =',
       fxHint: 'The HKD is pegged to the USD within a 7.75–7.85 convertibility range. For privacy, the tool never fetches live rates; enter the rate manually as needed.',
-      fxNote: 'Amounts shown in USD at 1 USD = {rate} HKD (inputs remain in HKD)'
+      fxNote: 'Amounts shown in USD at 1 USD = {rate} HKD (inputs remain in HKD)',
+      lastLoginLabel: 'Last login: ',
+      logout: 'Log out',
+      close: 'Close',
+      authTitle: 'Sign in to Wealth Check',
+      authSub: 'Sign in to use the client wealth diagnostic tool',
+      authConfigMissing: 'Firebase keys are not pasted yet (CONFIG block), so sign-in cannot complete.',
+      loginNoticePre: 'By signing in, you agree to our ',
+      loginNoticeLink: 'Privacy Policy',
+      loginNoticePost: '. Your financial figures are calculated locally and never uploaded.',
+      authDomainNote: "Sign-in is provided by Firebase (Google). The sign-in window shows nikifintech-wealth.firebaseapp.com, which is this tool's secure authentication domain, not a third-party website.",
+      authGoogle: 'Sign in with Google',
+      authOr: 'or use email',
+      authName: 'Display name (optional, used on sign-up)',
+      authEmail: 'Email',
+      authPassword: 'Password',
+      authSignIn: 'Sign in',
+      authSignUp: 'Sign up',
+      authForgot: 'Forgot password?',
+      authNeedEmail: 'Please enter a valid email address.',
+      authNeedPassword: 'Please enter a password of at least 6 characters.',
+      authResetSent: 'If this email is registered, a password reset link has been sent. Please check your inbox.',
+      authSignUpSent: 'Account created. A verification email has been sent.',
+      errInvalidEmail: 'The email address is not valid.',
+      errBadLogin: 'Incorrect email or password.',
+      errEmailInUse: 'This email is already registered. Please sign in instead.',
+      errWeakPassword: 'Password is too weak. Use at least 6 characters.',
+      errTooMany: 'Too many attempts. Please try again later.',
+      errNetwork: 'Network error. Please check your connection and try again.',
+      errPopupClosed: 'The sign-in window was closed before finishing.',
+      errNotEnabled: 'This sign-in method is not enabled in Firebase yet.',
+      errDomain: 'This domain is not authorised. Add it under Firebase Authorized domains.',
+      errGeneric: 'Sign-in failed. Please try again later.',
+      verifyTitle: 'Verify your email',
+      verifySub: 'Verify to start using the tool',
+      verifyBody: 'We sent a verification link to:',
+      verifyHint: 'Open the link in that email, then tap "I have verified". Check your spam folder if you cannot find it.',
+      verifyDone: 'I have verified',
+      verifyResend: 'Resend email',
+      verifyResent: 'Verification email sent again.',
+      verifyNotYet: 'Email not verified yet. Please open the link in the email first.',
+      adminTitle: 'Admin stats',
+      adminRefresh: 'Refresh',
+      adminNote: 'Logs do not store any income, expense, or other financial figures.',
+      adminLoginTitle: 'Logins',
+      adminUV: 'Unique users (UV)',
+      adminLogin7d: 'Users signed in, last 7 days',
+      adminLoginToday: 'Logins today',
+      adminUsageTitle: 'Feature usage (all time)',
+      adminUsage7dTitle: 'Feature usage (last 7 days)',
+      adminOpenCalc: 'Calculator opens',
+      adminGenReport: 'Reports generated',
+      adminExportPdf: 'PDF exports',
+      adminLogsTitle: 'Raw logs (newest first)',
+      adminColTime: 'Time',
+      adminColUid: 'uid',
+      adminColEmail: 'email',
+      adminColAction: 'action',
+      adminActionLogin: 'login',
+      adminLoading: 'Loading statistics…',
+      adminEmpty: 'No records yet',
+      adminError: "Couldn't load statistics",
+      ppTitle: 'Niki Wealth Check — Privacy Policy',
+      ppUpdated: 'Last updated: 28 September 2026',
+      ppH1: '1. Information collected',
+      ppB1: 'Your email address, display name, login timestamp and browser/device information when you log in.',
+      ppH2: '2. Information NOT collected',
+      ppB2: 'All financial figures you enter into the calculator are calculated locally in your browser and will NEVER be uploaded or saved on Firebase servers.',
+      ppH3: '3. Usage of data',
+      ppB3: 'Authenticate user account, count tool usage frequency. We will NOT sell or share your personal data for marketing purposes.',
+      ppH4: '4. Data retention',
+      ppB4: 'Account and login records remain while your account is active. You may request full data deletion at any time.',
+      ppH5: '5. Your rights',
+      ppB5: 'You have the right to access, correct or delete your personal data.',
+      ppContact: 'Contact: ',
+      ppWebsite: 'Website: ',
+      ppH6: '6. Cookies',
+      ppB6: 'Only essential cookies required to maintain login state. No advertising or cross-site tracking cookies.',
+      ppAuthDomain: "Sign-in is provided by Firebase (Google). The sign-in window shows nikifintech-wealth.firebaseapp.com, which is this tool's secure authentication domain, not a third-party website."
     }
   };
 
@@ -2497,6 +3175,7 @@
     });
     document.getElementById('btnZh').classList.toggle('active', lang === 'zh-HK');
     document.getElementById('btnEn').classList.toggle('active', lang === 'en');
+    renderAuthI18n();
     renderIncomes();
     renderAssets();
     renderCars();
@@ -3768,7 +4447,10 @@
     });
 
     document.querySelectorAll('[data-print-report]').forEach(function (b) {
-      b.addEventListener('click', function () { window.print(); });
+      b.addEventListener('click', function () {
+        logEvent('generate_report');
+        window.print();
+      });
     });
 
     document.getElementById('btnReset').addEventListener('click', function () {
@@ -3847,6 +4529,10 @@
     var printOpenState = [];
     var printSavedTitle = null;
     window.addEventListener('beforeprint', function () {
+      if (!exportLogged) {
+        exportLogged = true;
+        logEvent('export_pdf');
+      }
       if (!printOpenState.length) {
         document.querySelectorAll('details.section').forEach(function (d) {
           printOpenState.push([d, d.open]);
@@ -3866,6 +4552,8 @@
       if (gaugeChart) gaugeChart.resize({ width: 140, height: 140 });
     });
     window.addEventListener('afterprint', function () {
+      // Some browsers fire a second beforeprint/afterprint pair for one print() call.
+      setTimeout(function () { exportLogged = false; }, 1500);
       printOpenState.forEach(function (p) { p[0].open = p[1]; });
       printOpenState = [];
       if (printSavedTitle !== null) {
@@ -3876,6 +4564,513 @@
       var auto = { width: 'auto', height: 'auto' };
       Object.keys(charts).forEach(function (k) { charts[k].resize(auto); });
       if (gaugeChart) gaugeChart.resize(auto);
+    });
+  }
+
+  // —— Auth gate, usage log, admin panel, privacy modal ——
+  // Nothing in this section reads `state`: Firebase only ever receives login
+  // metadata (loginLogs) and the uid/email/action/timestamp events in logEvent().
+  let auth = null;
+  let db = null;
+  let currentUser = null;
+  let exportLogged = false;
+  let calcOpenLogged = false;
+  let verifyTimer = null;
+  let logoClicks = 0;
+  let logoTimer = null;
+  let modalReturnFocus = null;
+  let adminData = null;
+  let adminLoading = false;
+  let adminFailed = false;
+  let adminSeq = 0;
+  const authMsgs = {};
+
+  function firebaseConfigured() {
+    return !Object.keys(firebaseConfig).some(function (k) {
+      return String(firebaseConfig[k] || '').indexOf('PASTE_') === 0;
+    });
+  }
+
+  function isVerified(user) {
+    if (!user) return false;
+    if (user.emailVerified) return true;
+    return (user.providerData || []).some(function (p) { return p && p.providerId === 'google.com'; });
+  }
+
+  function isAdmin(user) {
+    return !!user && isVerified(user) && String(user.email || '').toLowerCase() === ADMIN_EMAIL;
+  }
+
+  function toDate(v) {
+    if (!v) return null;
+    var d = typeof v.toDate === 'function' ? v.toDate() : new Date(v);
+    return isNaN(d.getTime()) ? null : d;
+  }
+
+  function fmtDateTime(v) {
+    var d = toDate(v);
+    if (!d) return '—';
+    return d.toLocaleString(lang === 'en' ? 'en-HK' : 'zh-HK', {
+      year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
+    });
+  }
+
+  function setMsg(id, key, kind, extra) {
+    authMsgs[id] = key ? { key: key, kind: kind || 'info', extra: extra || '' } : null;
+    renderMsg(id);
+  }
+
+  function renderMsg(id) {
+    var el = document.getElementById(id);
+    if (!el) return;
+    var m = authMsgs[id];
+    el.className = 'alert auth-msg' + (m ? ' alert-' + m.kind : '');
+    el.textContent = m ? t(m.key) + m.extra : '';
+  }
+
+  function authErrorKey(err) {
+    switch (err && err.code) {
+      case 'auth/invalid-email': return 'errInvalidEmail';
+      case 'auth/user-not-found':
+      case 'auth/wrong-password':
+      case 'auth/invalid-credential':
+      case 'auth/invalid-login-credentials': return 'errBadLogin';
+      case 'auth/email-already-in-use': return 'errEmailInUse';
+      case 'auth/weak-password': return 'errWeakPassword';
+      case 'auth/too-many-requests': return 'errTooMany';
+      case 'auth/network-request-failed': return 'errNetwork';
+      case 'auth/popup-closed-by-user':
+      case 'auth/cancelled-popup-request': return 'errPopupClosed';
+      case 'auth/operation-not-allowed': return 'errNotEnabled';
+      case 'auth/unauthorized-domain': return 'errDomain';
+      case 'auth/api-key-not-valid.-please-pass-a-valid-api-key.':
+      case 'auth/invalid-api-key': return 'authConfigMissing';
+      default: return 'errGeneric';
+    }
+  }
+
+  function renderLastLogin() {
+    var el = document.getElementById('lastLoginValue');
+    el.textContent = currentUser && currentUser.metadata ? fmtDateTime(currentUser.metadata.lastSignInTime) : '—';
+  }
+
+  function renderAuthI18n() {
+    ['authMsg', 'verifyMsg'].forEach(renderMsg);
+    if (auth) auth.languageCode = lang === 'en' ? 'en' : 'zh-TW';
+    renderLastLogin();
+    renderAdmin();
+  }
+
+  function resizeChartsAfterReveal() {
+    requestAnimationFrame(function () { window.dispatchEvent(new Event('resize')); });
+  }
+
+  function showView(view) {
+    document.getElementById('authScreen').hidden = view === 'app';
+    document.getElementById('authLoginCard').hidden = view !== 'login';
+    document.getElementById('authVerifyCard').hidden = view !== 'verify';
+    document.getElementById('appMain').hidden = view !== 'app';
+    document.getElementById('userBar').hidden = view !== 'app';
+    if (view === 'app') {
+      resizeChartsAfterReveal();
+    } else {
+      document.getElementById('adminPanel').hidden = true;
+      adminSeq += 1;
+      adminData = null;
+      adminLoading = false;
+      adminFailed = false;
+    }
+    if (view === 'verify') startVerifyPoll(); else stopVerifyPoll();
+  }
+
+  function handleUser(user) {
+    currentUser = user || null;
+    if (!user) {
+      showView('login');
+      return;
+    }
+    if (!isVerified(user)) {
+      document.getElementById('verifyEmail').textContent = user.email || '';
+      showView('verify');
+      return;
+    }
+    document.getElementById('userEmail').textContent = user.email || user.displayName || '';
+    renderLastLogin();
+    setMsg('authMsg', null);
+    setMsg('verifyMsg', null);
+    var wasHidden = document.getElementById('appMain').hidden;
+    showView('app');
+    if (wasHidden && !calcOpenLogged) {
+      calcOpenLogged = true;
+      logEvent('open_finance_calculator');
+    }
+    if (wasHidden && isAdmin(user)) toggleAdmin(true, true);
+  }
+
+  // Rules only accept exactly these four fields; never add calculator data here.
+  async function logEvent(action) {
+    var user = currentUser;
+    if (!db || !user || !isVerified(user)) return;
+    try {
+      await db.collection('usage_logs').add({
+        uid: user.uid,
+        email: user.email,
+        action: action,
+        timestamp: new Date()
+      });
+    } catch (err) {
+      console.warn('usage_logs write failed', err && (err.code || err.message));
+    }
+  }
+
+  function startVerifyPoll() {
+    if (verifyTimer) return;
+    verifyTimer = setInterval(function () {
+      if (document.hidden || !auth || !auth.currentUser) return;
+      auth.currentUser.reload().then(function () {
+        if (isVerified(auth.currentUser)) handleUser(auth.currentUser);
+      }).catch(function () {});
+    }, 6000);
+  }
+
+  function stopVerifyPoll() {
+    if (verifyTimer) clearInterval(verifyTimer);
+    verifyTimer = null;
+  }
+
+  function withBusy(promise) {
+    var btns = document.querySelectorAll('#authScreen button');
+    btns.forEach(function (b) { b.disabled = true; });
+    return Promise.resolve(promise).finally(function () {
+      btns.forEach(function (b) { b.disabled = false; });
+    });
+  }
+
+  function requireAuth(msgId) {
+    if (auth) return true;
+    setMsg(msgId, 'authConfigMissing', 'warn');
+    return false;
+  }
+
+  function readCreds(needPassword) {
+    var email = document.getElementById('authEmail').value.trim();
+    var pw = document.getElementById('authPassword').value;
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      setMsg('authMsg', 'authNeedEmail', 'danger');
+      return null;
+    }
+    if (needPassword && pw.length < 6) {
+      setMsg('authMsg', 'authNeedPassword', 'danger');
+      return null;
+    }
+    return { email: email, pw: pw };
+  }
+
+  function signInGoogle() {
+    if (!requireAuth('authMsg')) return;
+    var provider = new firebase.auth.GoogleAuthProvider();
+    provider.setCustomParameters({ prompt: 'select_account' });
+    setMsg('authMsg', null);
+    withBusy(auth.signInWithPopup(provider).then(function (userCredential) {
+      // handleUser only logs when the app goes from hidden to shown, so onAuthStateChanged firing too won't double-log.
+      if (userCredential && userCredential.user) handleUser(userCredential.user);
+    }).catch(function (err) {
+      var code = err && err.code;
+      if (code === 'auth/popup-closed-by-user' || code === 'auth/cancelled-popup-request') return;
+      setMsg('authMsg', authErrorKey(err), 'danger');
+    }));
+  }
+
+  function signInEmail() {
+    if (!requireAuth('authMsg')) return;
+    var c = readCreds(true);
+    if (!c) return;
+    setMsg('authMsg', null);
+    withBusy(auth.signInWithEmailAndPassword(c.email, c.pw).then(function () {
+      document.getElementById('authPassword').value = '';
+    }).catch(function (err) {
+      setMsg('authMsg', authErrorKey(err), 'danger');
+    }));
+  }
+
+  function signUpEmail() {
+    if (!requireAuth('authMsg')) return;
+    var c = readCreds(true);
+    if (!c) return;
+    var name = document.getElementById('authName').value.trim();
+    setMsg('authMsg', null);
+    withBusy(auth.createUserWithEmailAndPassword(c.email, c.pw).then(function (cred) {
+      document.getElementById('authPassword').value = '';
+      var user = cred.user;
+      return (name ? user.updateProfile({ displayName: name }) : Promise.resolve())
+        .then(function () { return user.sendEmailVerification(); })
+        .then(function () { setMsg('verifyMsg', 'authSignUpSent', 'ok'); });
+    }).catch(function (err) {
+      setMsg(auth.currentUser ? 'verifyMsg' : 'authMsg', authErrorKey(err), 'danger');
+    }));
+  }
+
+  function forgotPassword() {
+    if (!requireAuth('authMsg')) return;
+    var c = readCreds(false);
+    if (!c) return;
+    withBusy(auth.sendPasswordResetEmail(c.email).then(function () {
+      setMsg('authMsg', 'authResetSent', 'ok');
+    }).catch(function (err) {
+      if (err && err.code === 'auth/user-not-found') setMsg('authMsg', 'authResetSent', 'ok');
+      else setMsg('authMsg', authErrorKey(err), 'danger');
+    }));
+  }
+
+  function checkVerified() {
+    if (!auth || !auth.currentUser) return;
+    var user = auth.currentUser;
+    withBusy(user.reload().then(function () {
+      var u = auth.currentUser;
+      if (isVerified(u)) return u.getIdToken(true).then(function () { handleUser(u); });
+      setMsg('verifyMsg', 'verifyNotYet', 'warn');
+    }).catch(function (err) {
+      setMsg('verifyMsg', authErrorKey(err), 'danger');
+    }));
+  }
+
+  function resendVerification() {
+    if (!auth || !auth.currentUser) return;
+    withBusy(auth.currentUser.sendEmailVerification().then(function () {
+      setMsg('verifyMsg', 'verifyResent', 'ok');
+    }).catch(function (err) {
+      setMsg('verifyMsg', authErrorKey(err), 'danger');
+    }));
+  }
+
+  // Reload after sign-out so the in-memory calculator figures are wiped too.
+  function logOut() {
+    if (!auth) { handleUser(null); return; }
+    auth.signOut().then(function () { window.location.reload(); }).catch(function () {
+      window.location.reload();
+    });
+  }
+
+  function onLogoClick() {
+    if (!isAdmin(currentUser) || document.getElementById('appMain').hidden) {
+      logoClicks = 0;
+      return;
+    }
+    logoClicks += 1;
+    clearTimeout(logoTimer);
+    logoTimer = setTimeout(function () { logoClicks = 0; }, 1500);
+    if (logoClicks >= 5) {
+      logoClicks = 0;
+      toggleAdmin();
+    }
+  }
+
+  function toggleAdmin(force, noScroll) {
+    var panel = document.getElementById('adminPanel');
+    var open = typeof force === 'boolean' ? force : panel.hidden;
+    if (open && !isAdmin(currentUser)) return;
+    panel.hidden = !open;
+    if (open) {
+      loadAdmin();
+      if (!noScroll) panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }
+
+  // Read-only: stats are computed here in the browser and never written back to Firestore.
+  function loadAdmin() {
+    if (!db || !isAdmin(currentUser)) return;
+    var seq = ++adminSeq;
+    adminLoading = true;
+    adminFailed = false;
+    renderAdmin();
+    Promise.all([
+      db.collection('loginLogs').get(),
+      db.collection('usage_logs').get()
+    ]).then(function (snaps) {
+      if (seq !== adminSeq) return;
+      adminData = { login: snaps[0].docs, usage: snaps[1].docs };
+      adminLoading = false;
+      renderAdmin();
+    }).catch(function (err) {
+      if (seq !== adminSeq) return;
+      console.warn('admin stats read failed', err && (err.code || err.message));
+      adminData = null;
+      adminLoading = false;
+      adminFailed = true;
+      renderAdmin();
+    });
+  }
+
+  // loginLogs holds one merged doc per uid (lastLogin is overwritten on every sign-in),
+  // so "logins today" counts users whose latest login is today, not every sign-in event.
+  function computeAdminStats(data) {
+    var now = new Date();
+    var weekAgo = now.getTime() - 7 * 24 * 60 * 60 * 1000;
+    var todayKey = now.toDateString();
+    var actions = ['open_finance_calculator', 'generate_report', 'export_pdf'];
+    var s = { uv: 0, login7d: 0, loginToday: 0, total: {}, recent: {}, rows: [] };
+    actions.forEach(function (a) { s.total[a] = 0; s.recent[a] = 0; });
+
+    var uids = {};
+    var recentUids = {};
+    data.login.forEach(function (doc) {
+      var d = doc.data() || {};
+      var id = d.uid || doc.id;
+      var last = toDate(d.lastLogin);
+      uids[id] = true;
+      if (last && last.getTime() >= weekAgo) recentUids[id] = true;
+      if (last && last.toDateString() === todayKey) s.loginToday += 1;
+      s.rows.push({ time: last, uid: doc.id, email: d.email, action: null });
+    });
+    s.uv = Object.keys(uids).length;
+    s.login7d = Object.keys(recentUids).length;
+
+    data.usage.forEach(function (doc) {
+      var d = doc.data() || {};
+      var ts = toDate(d.timestamp);
+      if (Object.prototype.hasOwnProperty.call(s.total, d.action)) {
+        s.total[d.action] += 1;
+        if (ts && ts.getTime() >= weekAgo) s.recent[d.action] += 1;
+      }
+      s.rows.push({ time: ts, uid: d.uid, email: d.email, action: d.action == null ? '' : String(d.action) });
+    });
+
+    s.rows.sort(function (a, b) {
+      return (b.time ? b.time.getTime() : 0) - (a.time ? a.time.getTime() : 0);
+    });
+    return s;
+  }
+
+  function renderAdmin() {
+    var panel = document.getElementById('adminPanel');
+    if (!panel || panel.hidden) return;
+    var status = document.getElementById('adminStatus');
+    status.className = 'alert auth-msg' + (adminFailed ? ' alert-danger' : adminLoading ? ' alert-info' : '');
+    status.textContent = adminFailed ? t('adminError') : adminLoading ? t('adminLoading') : '';
+    document.getElementById('btnAdminRefresh').disabled = adminLoading;
+
+    var s = adminData && !adminFailed ? computeAdminStats(adminData) : null;
+    function setNum(id, v) { document.getElementById(id).textContent = s ? String(v) : '—'; }
+    setNum('adminUV', s && s.uv);
+    setNum('adminLogin7d', s && s.login7d);
+    setNum('adminLoginToday', s && s.loginToday);
+    setNum('adminOpenCalc', s && s.total.open_finance_calculator);
+    setNum('adminGenReport', s && s.total.generate_report);
+    setNum('adminExportPdf', s && s.total.export_pdf);
+    setNum('adminOpenCalc7d', s && s.recent.open_finance_calculator);
+    setNum('adminGenReport7d', s && s.recent.generate_report);
+    setNum('adminExportPdf7d', s && s.recent.export_pdf);
+
+    var tbody = document.getElementById('adminRows');
+    if (!s) {
+      tbody.innerHTML = '';
+      return;
+    }
+    tbody.innerHTML = s.rows.length
+      ? s.rows.map(function (r) {
+          var action = r.action === null ? t('adminActionLogin') : (r.action || '—');
+          return '<tr><td>' + esc(fmtDateTime(r.time)) + '</td><td>' + esc(r.uid || '—') +
+            '</td><td>' + esc(r.email || '—') + '</td><td>' + esc(action) + '</td></tr>';
+        }).join('')
+      : '<tr><td colspan="4">' + esc(t('adminEmpty')) + '</td></tr>';
+  }
+
+  function openPrivacy() {
+    var modal = document.getElementById('privacyModal');
+    if (!modal.hidden) return;
+    modalReturnFocus = document.activeElement;
+    modal.hidden = false;
+    document.body.classList.add('modal-open');
+    document.getElementById('privacyClose').focus();
+  }
+
+  function closePrivacy() {
+    var modal = document.getElementById('privacyModal');
+    if (modal.hidden) return;
+    modal.hidden = true;
+    document.body.classList.remove('modal-open');
+    if (modalReturnFocus && typeof modalReturnFocus.focus === 'function') modalReturnFocus.focus();
+    modalReturnFocus = null;
+  }
+
+  function bindAuthEvents() {
+    document.getElementById('btnGoogle').addEventListener('click', signInGoogle);
+    document.getElementById('authForm').addEventListener('submit', function (e) {
+      e.preventDefault();
+      signInEmail();
+    });
+    document.getElementById('btnSignUp').addEventListener('click', signUpEmail);
+    document.getElementById('btnForgot').addEventListener('click', forgotPassword);
+    document.getElementById('btnVerified').addEventListener('click', checkVerified);
+    document.getElementById('btnResend').addEventListener('click', resendVerification);
+    document.getElementById('btnVerifyLogout').addEventListener('click', logOut);
+    document.getElementById('btnLogout').addEventListener('click', logOut);
+    document.getElementById('brandLogo').addEventListener('click', onLogoClick);
+    document.getElementById('btnAdminRefresh').addEventListener('click', loadAdmin);
+    document.getElementById('btnAdminClose').addEventListener('click', function () { toggleAdmin(false); });
+
+    document.querySelectorAll('[data-open-privacy]').forEach(function (el) {
+      el.addEventListener('click', openPrivacy);
+    });
+    document.querySelectorAll('[data-close-privacy]').forEach(function (el) {
+      el.addEventListener('click', closePrivacy);
+    });
+    document.addEventListener('keydown', function (e) {
+      var modal = document.getElementById('privacyModal');
+      if (modal.hidden) return;
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        closePrivacy();
+      } else if (e.key === 'Tab') {
+        var focusables = modal.querySelectorAll('button, a[href]');
+        var first = focusables[0];
+        var last = focusables[focusables.length - 1];
+        if (e.shiftKey && document.activeElement === first) {
+          e.preventDefault();
+          last.focus();
+        } else if (!e.shiftKey && document.activeElement === last) {
+          e.preventDefault();
+          first.focus();
+        }
+      }
+    });
+  }
+
+  function initAuth() {
+    showView('login');
+    if (typeof firebase === 'undefined') {
+      setMsg('authMsg', 'errNetwork', 'warn');
+      return;
+    }
+    if (!firebaseConfigured()) {
+      document.getElementById('authConfigNote').hidden = false;
+      return;
+    }
+    try {
+      var app = firebase.apps.length ? firebase.app() : firebase.initializeApp(firebaseConfig);
+      auth = app.auth();
+      db = app.firestore();
+    } catch (err) {
+      auth = null;
+      db = null;
+      document.getElementById('authConfigNote').hidden = false;
+      return;
+    }
+    auth.languageCode = lang === 'en' ? 'en' : 'zh-TW';
+    auth.onAuthStateChanged(handleUser, function (err) {
+      setMsg('authMsg', authErrorKey(err), 'danger');
+    });
+    auth.onAuthStateChanged(async function (user) {
+      if (user) {
+        try {
+          await db.collection('loginLogs').doc(user.uid).set({
+            email: user.email,
+            lastLogin: new Date()
+          }, { merge: true });
+        } catch (err) {
+          console.log('Login log write skipped', err);
+        }
+      }
     });
   }
 
@@ -3892,7 +5087,9 @@
     buildSectionTips();
     document.getElementById('extraPay').value = state.extraPay;
     bindEvents();
+    bindAuthEvents();
     applyI18n();
+    initAuth();
   }
 
   if (document.readyState === 'loading') {
