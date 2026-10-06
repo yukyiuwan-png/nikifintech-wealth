@@ -1060,6 +1060,16 @@
       color: var(--ink);
     }
     .modal-body h3:first-child { margin-top: 0; }
+    .modal-body .pp-purpose {
+      margin: 0 0 4px;
+      padding: 10px 12px;
+      background: var(--accent-soft);
+      border: 1px solid #e3d3b0;
+      border-left: 3px solid var(--accent);
+      border-radius: 10px;
+    }
+    .modal-body .pp-purpose h3 { margin-top: 0; }
+    .modal-body .pp-purpose p { color: var(--ink); }
     .modal-body p { margin: 0; }
     .modal-body p + p,
     .modal-body ul + p,
@@ -2023,7 +2033,7 @@
 
   <footer class="footer">
     <p data-i18n="disclaimer">一般免責聲明：本工具只供教育及一般參考，並非財務、保險或強積金意見，亦非受規管活動。結果是估算，並非個人建議。作決定前請諮詢持牌專業人士。</p>
-    <p style="margin-top:8px;" data-i18n="privacyFooter">私隱：你輸入的財務數字只在此瀏覽器內運算，重整、關閉或登出後即消失，不會寫入伺服器。帳號電郵、最近登入時間，以及開啟計算機、生成報告和匯出 PDF 的使用紀錄，會儲存在 Firebase，供登入及工具擁有人統計。詳見個人資料收集聲明。</p>
+    <p style="margin-top:8px;" data-i18n="privacyFooter">私隱：你輸入的財務數字只在此瀏覽器內運算，重整、關閉或登出後即消失，不會寫入伺服器。帳號電郵、最近登入時間，以及開啟計算機、生成報告和匯出 PDF 的紀錄，會存入 Firestore（香港，asia-east2），用以編製使用統計，並讓你登入。Firebase Authentication 是 Google 的全球服務，登入資料仍可能在香港以外處理。詳見個人資料收集聲明。</p>
     <p class="footer-links"><button type="button" class="link-btn" id="footerPrivacy" data-open-privacy data-i18n="privacyLink">個人資料收集聲明</button></p>
   </footer>
 
@@ -2038,6 +2048,10 @@
         <button type="button" class="modal-close" id="privacyClose" data-close-privacy aria-label="Close">&times;</button>
       </div>
       <div class="modal-body">
+        <div class="pp-purpose">
+          <h3 data-i18n="ppH4"></h3>
+          <p data-i18n="ppB4"></p>
+        </div>
         <h3 data-i18n="ppH1"></h3>
         <p data-i18n="ppB1"></p>
         <h3 data-i18n="ppH2"></h3>
@@ -2051,8 +2065,6 @@
         </ul>
         <h3 data-i18n="ppH3"></h3>
         <p data-i18n="ppB3"></p>
-        <h3 data-i18n="ppH4"></h3>
-        <p data-i18n="ppB4"></p>
         <h3 data-i18n="ppH5"></h3>
         <p data-i18n="ppB5"></p>
         <h3 data-i18n="ppH6"></h3>
@@ -2203,7 +2215,7 @@
       chartPayoff: '雪球 vs 雪崩還款曲線',
       chartNet: '資產、負債與淨資產',
       disclaimer: '一般免責聲明：本工具只供教育及一般參考，並非財務、保險或強積金意見，亦非受規管活動。結果是估算，並非個人建議。作決定前請諮詢持牌專業人士。',
-      privacyFooter: '私隱：你輸入的財務數字只在此瀏覽器內運算，重整、關閉或登出後即消失，不會寫入伺服器。帳號電郵、最近登入時間，以及開啟計算機、生成報告和匯出 PDF 的使用紀錄，會儲存在 Firebase，供登入及工具擁有人統計。詳見個人資料收集聲明。',
+      privacyFooter: '私隱：你輸入的財務數字只在此瀏覽器內運算，重整、關閉或登出後即消失，不會寫入伺服器。帳號電郵、最近登入時間，以及開啟計算機、生成報告和匯出 PDF 的紀錄，會存入 Firestore（香港，asia-east2），用以編製使用統計，並讓你登入。Firebase Authentication 是 Google 的全球服務，登入資料仍可能在香港以外處理。詳見個人資料收集聲明。',
       privacyLink: '個人資料收集聲明',
       mIncome: '每月總收入',
       mExpense: '每月總支出',
@@ -2543,21 +2555,21 @@
       adminError: '載入統計失敗',
       ppTitle: '個人資料收集聲明',
       ppUpdated: '最後更新：2026 年 10 月 6 日',
-      ppH1: '1. 資料使用者',
+      ppH1: '2. 資料使用者',
       ppB1: '本工具（HK Client Wealth Check · 客戶理財診斷）由工具營運者運作。按《個人資料（私隱）條例》提出的查閱、改正或刪除要求，請聯絡下方電郵。',
-      ppH2: '2. 收集的資料',
+      ppH2: '3. 收集的資料',
       ppB2: '登入後才可使用計算機。你在計算機輸入的財務數字不是必須提供的資料，亦不會被收集。',
       ppL2a: '帳號（Firebase Authentication，由 Google 提供）：電郵地址、登入方式（Google 或電郵密碼）、電郵是否已驗證、帳號建立時間及最近登入時間。以電郵註冊時，密碼由 Firebase 保管，本頁不會讀取或另存密碼。註冊時如填寫顯示名稱，會存於帳號。使用 Google 登入時，Google 可能向 Firebase 提供名稱及頭像網址。',
       ppL2b: '登入紀錄（Firestore 的 loginLogs，每個帳號一筆，其後每次登入覆寫）：電郵地址、最近一次登入時間。文件編號是 Firebase 用戶編號（uid）。',
       ppL2c: '使用紀錄（Firestore 的 usage_logs，每次事件新增一筆）：用戶編號、電郵地址、動作（開啟計算機、生成報告或匯出 PDF）及時間。',
       ppL2d: '不會收集或上傳：收入、開支、債務、資產、保單、理財目標、客戶姓名、顧問姓名，以及你在計算機輸入的任何其他數字。這些資料只在瀏覽器記憶體運算，重整頁面、關閉頁面或登出後即消失，不會寫入 Firestore、localStorage、sessionStorage 或 IndexedDB。',
       ppL2e: '本頁沒有載入 Firebase Analytics，也不會把瀏覽器或裝置型號寫入 Firestore。Google Firebase 作為登入及資料庫供應商，可能按其服務條款處理技術紀錄（例如 IP 位址）。',
-      ppH3: '3. 是否必須提供',
+      ppH3: '4. 是否必須提供',
       ppB3: '電郵及登入是使用計算機的必要條件；不登入便不能使用工具。顯示名稱可選填。計算機內的財務數字屬自願輸入，而且不會離開瀏覽器。',
-      ppH4: '4. 使用目的',
-      ppB4: '建立及驗證帳號、記錄最近登入時間、統計功能使用次數（開啟計算機、生成報告、匯出 PDF），以及處理查閱、改正或刪除要求。個人資料不會被出售，亦不會用於市場推廣，或用於向你提供個人化的保險、強積金或投資建議。',
+      ppH4: '1. 使用目的',
+      ppB4: '收集這些資料的主要目的，是編製本工具的使用統計，例如有多少人登入、計算機被開啟多少次，以及生成了多少份報告和 PDF。帳號電郵亦用於讓你登入。這些資料不用於市場推廣，亦不會出售。除 Google 以 Firebase Authentication 及 Cloud Firestore 服務供應商身份處理外，不會向其他第三方分享。資料亦用於處理查閱、改正或刪除要求，不用於向你提供個人化的保險、強積金或投資建議。',
       ppH5: '5. 誰可查閱',
-      ppB5: '其他登入用戶不能讀取你的紀錄。只有工具營運者的管理員帳號（yukyiuwan@gmail.com，且電郵已驗證）可在管理員面板讀取登入及使用紀錄。資料存放於 Google Firebase（Authentication 及 Cloud Firestore），可能在香港以外地方處理。除上述用途外，不會向其他類別的人士轉移。Firestore 的實際地區以 Firebase 控制台的資料庫設定為準。',
+      ppB5: '其他登入用戶不能讀取你的紀錄。只有工具營運者的管理員帳號（yukyiuwan@gmail.com，且電郵已驗證）可在管理員面板讀取登入及使用紀錄。Firestore 內的帳號及使用紀錄存放於香港（asia-east2）。Firebase Authentication（Google 登入及電郵帳號）是 Google 的全球服務，登入資料仍可能由 Google 在香港以外處理。除上述用途及上述 Google 服務外，不會向其他類別的人士轉移。',
       ppH6: '6. 保留',
       ppB6: '帳號資料在帳號存續期間保留。loginLogs 只保留最近一次登入（每次登入覆寫），直至你要求刪除或帳號被刪除。usage_logs 會累積保存；本工具沒有自動刪除期限，直至你要求刪除或營運者刪除。財務數字不會被保存。',
       ppH7: '7. 查閱、改正及刪除',
@@ -2669,7 +2681,7 @@
       chartPayoff: 'Snowball vs Avalanche curve',
       chartNet: 'Assets, liabilities & net worth',
       disclaimer: 'General disclaimer: This tool is for education and general reference only. It is not financial, insurance or MPF advice and is not a regulated activity. Results are estimates, not personal recommendations. Consult a licensed professional before making a decision.',
-      privacyFooter: 'Privacy: Financial figures you enter are processed only in this browser and disappear when you refresh, close the page or sign out. They are not written to a server. Your account email, last sign-in time, and usage events for opening the calculator, generating a report and exporting a PDF are stored in Firebase for sign-in and for the tool owner\'s statistics. See the Personal Information Collection Statement.',
+      privacyFooter: 'Privacy: Financial figures you enter are processed only in this browser and disappear when you refresh, close the page or sign out. They are not written to a server. Your account email, last sign-in time, and records of opening the calculator, generating a report and exporting a PDF are stored in Firestore in Hong Kong (asia-east2), to compile usage statistics and to let you sign in. Firebase Authentication is a global Google service, so sign-in data may still be processed outside Hong Kong. See the Personal Information Collection Statement.',
       privacyLink: 'Personal Information Collection Statement',
       mIncome: 'Total monthly income',
       mExpense: 'Total monthly expenses',
@@ -3009,21 +3021,21 @@
       adminError: "Couldn't load statistics",
       ppTitle: 'Personal Information Collection Statement',
       ppUpdated: 'Last updated: 6 October 2026',
-      ppH1: '1. Data user',
+      ppH1: '2. Data user',
       ppB1: 'This tool (HK Client Wealth Check · 客戶理財診斷) is run by its operator. Requests to access, correct or delete personal data under the Personal Data (Privacy) Ordinance should be sent to the email below.',
-      ppH2: '2. What is collected',
+      ppH2: '3. What is collected',
       ppB2: 'You need to sign in before using the calculator. Financial figures you type into the calculator are not required to be provided, and they are not collected.',
       ppL2a: 'Account (Firebase Authentication, provided by Google): email address, sign-in method (Google or email and password), whether the email is verified, and the account creation and last sign-in times. For email sign-up, the password is held by Firebase; this page does not read or store it separately. A display name is stored on the account only if you enter one at sign-up. Google sign-in may also pass a name and photo URL to Firebase.',
       ppL2b: 'Sign-in record (Firestore collection loginLogs, one document per account, overwritten on each sign-in): email address and the time of the latest sign-in. The document id is the Firebase user id (uid).',
       ppL2c: 'Usage record (Firestore collection usage_logs, one new document per event): user id, email address, action (open the calculator, generate a report, or export a PDF) and the time.',
       ppL2d: 'Not collected and not uploaded: income, expenses, debts, assets, policies, goals, client name, adviser name, or any other figure typed into the calculator. Those stay in browser memory and disappear when you refresh, close the page or sign out. They are not written to Firestore, localStorage, sessionStorage or IndexedDB.',
       ppL2e: 'This page does not load Firebase Analytics and does not write a browser or device model into Firestore. Google Firebase, as the sign-in and database provider, may process technical logs (such as an IP address) under its own terms.',
-      ppH3: '3. Obligatory or voluntary',
+      ppH3: '4. Obligatory or voluntary',
       ppB3: 'An email and a sign-in are required to use the calculator; without them the tool cannot be used. The display name is optional. Financial figures in the calculator are voluntary and do not leave the browser.',
-      ppH4: '4. Purposes',
-      ppB4: 'To create and authenticate the account, to record the latest sign-in, to count feature use (opening the calculator, generating a report, exporting a PDF), and to handle access, correction and deletion requests. Personal data is not sold, is not used for marketing, and is not used to give you personalised insurance, MPF or investment advice.',
+      ppH4: '1. Purpose',
+      ppB4: 'The main purpose of collecting this data is to compile statistics on how the tool is used: how many people sign in, how many times the calculator is opened, and how many reports and PDFs are generated. The account email is also needed so you can sign in. This data is not used for marketing and is not sold. It is not shared with any third party other than Google, which processes it as the provider of Firebase Authentication and Cloud Firestore. It is also used to handle access, correction and deletion requests, and it is not used to give you personalised insurance, MPF or investment advice.',
       ppH5: '5. Who can access it',
-      ppB5: 'Other signed-in users cannot read your records. Only the operator\'s admin account (yukyiuwan@gmail.com, and only when that email is verified) can read the sign-in and usage logs in the admin panel. The data is stored with Google Firebase (Authentication and Cloud Firestore) and may be processed outside Hong Kong. It is not transferred to any other class of person for these purposes. The actual Firestore region is whatever is set for the database in the Firebase console.',
+      ppB5: 'Other signed-in users cannot read your records. Only the operator\'s admin account (yukyiuwan@gmail.com, and only when that email is verified) can read the sign-in and usage logs in the admin panel. Account and usage records in Firestore are stored in Hong Kong (asia-east2). Firebase Authentication (Google sign-in and email accounts) is a global Google service, so sign-in data may still be processed outside Hong Kong by Google. Apart from the purposes above and those Google services, the records are not transferred to any other class of person.',
       ppH6: '6. Retention',
       ppB6: 'Account data is kept while the account exists. loginLogs keeps only the latest sign-in (each sign-in overwrites it) until you ask for deletion or the account is deleted. usage_logs accumulate; this tool has no automatic deletion period, and they stay until you ask for deletion or the operator deletes them. Financial figures are not kept.',
       ppH7: '7. Access, correction and deletion',
