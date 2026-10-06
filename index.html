@@ -1,56 +1,17 @@
 <!DOCTYPE html>
 <!--
-  ════════════════════════════════════════════════════════════════════
-  Firebase 設定步驟（Setup guide）
-  ════════════════════════════════════════════════════════════════════
-  (a) 到 https://console.firebase.google.com 建立 Firebase 專案，
-      專案 ID（Project ID）= nikifin。預設網站網址為 https://nikifintech-wealth.web.app
+  HK Client Wealth Check · 客戶理財診斷
+  Firebase project: nikifintech-wealth
+  Live site: https://nikifintech-wealth.web.app
 
-  (b) Authentication > Sign-in method：啟用「Email/Password」及「Google」。
+  Financial figures live only in the in-memory `state` object. They are not
+  written to Firestore, localStorage, sessionStorage, IndexedDB or cookies.
+  Firebase Auth holds the account. Firestore holds loginLogs (email, lastLogin)
+  and usage_logs (uid, email, action, timestamp). Rules are in firestore.rules.
+  Setup, privacy model and deploy steps are in README.md.
 
-  (c) 建立 Firestore Database。建立完成後，把安全規則（Rules）完全取代為：
-
-rules_version = '2';
-service cloud.firestore {
-  match /databases/{database}/documents {
-    match /loginLogs/{userId} {
-      allow create, update: if request.auth != null && request.auth.uid == userId;
-      allow read: if request.auth.token.email == "yukyiuwan@gmail.com";
-    }
-    match /usage_logs/{logId} {
-      allow create: if request.auth != null;
-      allow read: if request.auth.token.email == "yukyiuwan@gmail.com";
-    }
-  }
-}
-
-      註：usage_logs 只記錄 uid、email、action、timestamp，永不寫入任何財務數字。
-      管理員面板讀取 loginLogs（登入用戶數）及 usage_logs（按 action 點算）。
-      usage_logs 的 create 規則只要求已登入，舊有登入紀錄寫入的欄位亦可通過。
-      以上只是範例，並未自動發佈：Hosting 部署不會發佈規則，請在 Firebase Console
-      > Firestore > Rules 貼上並按「發佈」，否則管理員面板讀取會出現 permission-denied。
-
-  (d) Project settings > General > Your apps：複製 firebaseConfig，
-      貼到下方 <script> 開頭標明「CONFIG」的區塊，取代 PASTE_ 開頭的佔位值。
-      （已完成：project nikifintech-wealth 的 config 已填入。）
-
-  (e) Firebase Hosting 預設網站網址：https://nikifintech-wealth.web.app
-
-  (f) Authentication > Settings > Authorized domains：加入 nikifintech-wealth.web.app
-
-  Mac Terminal 部署指令：
-    1. 先安裝 Node.js（https://nodejs.org），然後執行：
-         npm install -g firebase-tools
-    2. firebase login
-    3. cd 到此專案資料夾，例如：
-         cd "/Users/nikiisgenevieve/Desktop/financial tool"
-    4. firebase deploy --only hosting --project nikifin
-
-  注意：CONFIG 區塊內的 PASTE_ 佔位值是刻意保留的。請只在本機貼上真實金鑰；
-  如果此 repo 會與他人共用，請不要 commit 真實的 API keys。
-  私隱：所有財務數字只存在瀏覽器記憶體（state 物件），
-  永不寫入 Firestore、Auth、localStorage、sessionStorage、IndexedDB 或 Cookie。
-  ════════════════════════════════════════════════════════════════════
+  Review before deploying. Hosting-only deploy does not publish rules.
+    firebase deploy --only hosting,firestore:rules --project nikifintech-wealth
 -->
 <html lang="zh-HK">
 <head>
@@ -59,6 +20,7 @@ service cloud.firestore {
   <meta name="robots" content="noindex, nofollow" />
   <meta name="referrer" content="strict-origin-when-cross-origin" />
   <title>HK Client Wealth Check · 客戶理財診斷</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='5' fill='%230b1f3a'/%3E%3Cpath d='M5 17V9l7-3.5L19 9v8' fill='none' stroke='%23b8975a' stroke-width='1.6' stroke-linejoin='round'/%3E%3Cpath d='M9 17v-4h6v4' fill='none' stroke='white' stroke-width='1.6' stroke-linejoin='round'/%3E%3C/svg%3E" />
   <!-- External resources: fonts + ECharts + Firebase (login & usage log only; no financial data) -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -213,12 +175,12 @@ service cloud.firestore {
       gap: 6px;
       padding: 6px 10px;
       border-radius: 999px;
-      background: var(--ok-bg);
-      color: var(--ok);
+      background: var(--accent-soft);
+      color: var(--accent-deep);
       font-size: 11px;
       font-weight: 600;
-      border: 1px solid var(--ok-line);
-      max-width: 220px;
+      border: 1px solid var(--warn-line);
+      max-width: 240px;
     }
     .privacy-pill svg { flex-shrink: 0; }
     .lang-toggle {
@@ -1099,6 +1061,11 @@ service cloud.firestore {
     }
     .modal-body h3:first-child { margin-top: 0; }
     .modal-body p { margin: 0; }
+    .modal-body p + p,
+    .modal-body ul + p,
+    .modal-body p + ul { margin-top: 8px; }
+    .modal-body ul { margin: 0; padding-left: 1.15em; }
+    .modal-body li + li { margin-top: 6px; }
     .modal-body a {
       color: var(--brand);
       font-weight: 600;
@@ -1328,7 +1295,7 @@ service cloud.firestore {
       </div>
       <div class="brand-text">
         <div class="brand-name" data-i18n="brand">客戶理財診斷</div>
-        <div class="brand-sub" data-i18n="brandSub">隱私優先 · 本地運算 · HKD</div>
+        <div class="brand-sub" data-i18n="brandSub">財務數字本地計算 · HKD</div>
       </div>
     </div>
     <div class="nav-actions">
@@ -1337,7 +1304,7 @@ service cloud.firestore {
           <path d="M12 3l7 3v5c0 5-3.5 8.5-7 10-3.5-1.5-7-5-7-10V6l7-3z" stroke="currentColor" stroke-width="1.8"/>
           <path d="M9.5 12.2l1.8 1.8 3.5-3.8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
-        <span data-i18n="privacyTag">客戶數據不會離開此瀏覽器</span>
+        <span data-i18n="privacyTag">財務數字只在本機</span>
       </div>
       <div class="lang-toggle" role="group" aria-label="Language">
         <button type="button" id="btnZh" class="active">繁中</button>
@@ -1367,7 +1334,7 @@ service cloud.firestore {
       <div class="auth-body">
         <p class="alert alert-warn" id="authConfigNote" hidden data-i18n="authConfigMissing">Firebase 金鑰尚未貼上，暫時無法完成登入。</p>
         <p class="auth-notice">
-          <span data-i18n="loginNoticePre">登入即代表你同意</span><button type="button" class="link-btn" data-open-privacy data-i18n="loginNoticeLink">私隱政策</button><span data-i18n="loginNoticePost">。你的財務數字會在瀏覽器本地計算，不會上傳。</span>
+          <span data-i18n="loginNoticePre">登入即表示你已閱讀</span><button type="button" class="link-btn" data-open-privacy data-i18n="loginNoticeLink">個人資料收集聲明</button><span data-i18n="loginNoticePost">。財務數字只在瀏覽器計算，不會上傳；電郵、登入時間及使用紀錄會儲存在 Firebase。</span>
         </p>
         <p class="auth-notice" data-i18n="authDomainNote">登入認證由 Firebase（Google）提供，登入彈窗會顯示 nikifintech-wealth.firebaseapp.com，屬於本工具安全認證域名，並非第三方網站。</p>
         <button type="button" class="btn btn-google btn-block" id="btnGoogle">
@@ -1418,6 +1385,9 @@ service cloud.firestore {
           <button type="button" class="btn btn-ghost" id="btnResend" data-i18n="verifyResend">重新發送電郵</button>
           <button type="button" class="btn btn-ghost" id="btnVerifyLogout" data-i18n="logout">登出</button>
         </div>
+        <p class="auth-notice">
+          <span data-i18n="loginNoticePre">登入即表示你已閱讀</span><button type="button" class="link-btn" data-open-privacy data-i18n="loginNoticeLink">個人資料收集聲明</button><span data-i18n="loginNoticePost">。財務數字只在瀏覽器計算，不會上傳；電郵、登入時間及使用紀錄會儲存在 Firebase。</span>
+        </p>
         <p class="alert auth-msg" id="verifyMsg" role="status"></p>
       </div>
     </div>
@@ -1481,7 +1451,7 @@ service cloud.firestore {
         <p id="printFxLine" hidden></p>
       </div>
     </div>
-    <p class="hero-line" data-i18n="heroLine">輸入客戶收支、債務與保障資料，即時生成理財健康診斷（僅存於本機記憶體）。</p>
+    <p class="hero-line" data-i18n="heroLine">輸入客戶收支、債務與保障資料，即時生成理財健康診斷（財務數字只存在本機記憶體，不會上傳）。</p>
 
     <div class="layout">
       <!-- LEFT: Inputs -->
@@ -1818,7 +1788,7 @@ service cloud.firestore {
               <svg class="chev" viewBox="0 0 24 24" fill="none"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
             </summary>
             <div class="section-body">
-              <p class="inline-note" data-i18n="goalsIntro">最多 3 個重大目標（置業 / 子女教育 / 婚禮）</p>
+              <p class="inline-note" data-i18n="goalsIntro">重大理財目標（置業 / 子女教育 / 婚禮 / 其他），可自由新增；按達成年份先後檢查盈餘是否足夠</p>
               <div class="dyn-list" id="goalList"></div>
               <button type="button" class="btn btn-primary btn-sm" id="btnAddGoal">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/></svg>
@@ -1836,7 +1806,7 @@ service cloud.firestore {
           <div class="panel-actions">
             <span class="privacy-pill">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M12 3l7 3v5c0 5-3.5 8.5-7 10-3.5-1.5-7-5-7-10V6l7-3z" stroke="currentColor" stroke-width="1.8"/></svg>
-              <span data-i18n="privacyTagShort">本地運算</span>
+              <span data-i18n="privacyTagShort">數字不上傳</span>
             </span>
             <button type="button" class="btn btn-primary btn-sm" data-print-report>
               <svg class="icon" width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -1868,7 +1838,8 @@ service cloud.firestore {
 
           <div class="metrics-grid" id="metricsGrid"></div>
 
-          <h3 style="margin:16px 0 0;font-size:14px;" data-i18n="actionsTitle">優先級行動建議</h3>
+          <h3 style="margin:16px 0 0;font-size:14px;" data-i18n="actionsTitle">經驗法則提示</h3>
+          <p class="inline-note" data-i18n="actionsNote">以下只把輸入數字與本工具的一般經驗法則比較，並非個人財務、保險或強積金建議。</p>
           <ul class="actions-list" id="actionsList"></ul>
 
           <div class="whatif">
@@ -2051,11 +2022,9 @@ service cloud.firestore {
   </main>
 
   <footer class="footer">
-    <p data-i18n="disclaimer">
-      免責聲明：此工具只作教育參考，不構成任何財務、保險專業建議。所有客戶數據僅在此瀏覽器內存運算，重整或關閉頁面後即消失，不會上傳或儲存至任何伺服器。
-    </p>
-    <p style="margin-top:8px;" data-i18n="privacyTag">客戶數據不會離開此瀏覽器</p>
-    <p class="footer-links"><button type="button" class="link-btn" id="footerPrivacy" data-open-privacy>Privacy / 私隱政策</button></p>
+    <p data-i18n="disclaimer">一般免責聲明：本工具只供教育及一般參考，並非財務、保險或強積金意見，亦非受規管活動。結果是估算，並非個人建議。作決定前請諮詢持牌專業人士。</p>
+    <p style="margin-top:8px;" data-i18n="privacyFooter">私隱：你輸入的財務數字只在此瀏覽器內運算，重整、關閉或登出後即消失，不會寫入伺服器。帳號電郵、最近登入時間，以及開啟計算機、生成報告和匯出 PDF 的使用紀錄，會儲存在 Firebase，供登入及工具擁有人統計。詳見個人資料收集聲明。</p>
+    <p class="footer-links"><button type="button" class="link-btn" id="footerPrivacy" data-open-privacy data-i18n="privacyLink">個人資料收集聲明</button></p>
   </footer>
 
   <div class="modal" id="privacyModal" hidden>
@@ -2063,8 +2032,8 @@ service cloud.firestore {
     <div class="modal-dialog" role="dialog" aria-modal="true" aria-labelledby="ppTitle">
       <div class="modal-head">
         <div>
-          <h2 id="ppTitle" data-i18n="ppTitle">理財健康檢查 — 私隱政策</h2>
-          <p data-i18n="ppUpdated">最後更新：2026 年 9 月 28 日</p>
+          <h2 id="ppTitle" data-i18n="ppTitle">個人資料收集聲明</h2>
+          <p data-i18n="ppUpdated">最後更新：2026 年 10 月 6 日</p>
         </div>
         <button type="button" class="modal-close" id="privacyClose" data-close-privacy aria-label="Close">&times;</button>
       </div>
@@ -2073,16 +2042,27 @@ service cloud.firestore {
         <p data-i18n="ppB1"></p>
         <h3 data-i18n="ppH2"></h3>
         <p data-i18n="ppB2"></p>
+        <ul>
+          <li data-i18n="ppL2a"></li>
+          <li data-i18n="ppL2b"></li>
+          <li data-i18n="ppL2c"></li>
+          <li data-i18n="ppL2d"></li>
+          <li data-i18n="ppL2e"></li>
+        </ul>
         <h3 data-i18n="ppH3"></h3>
         <p data-i18n="ppB3"></p>
         <h3 data-i18n="ppH4"></h3>
         <p data-i18n="ppB4"></p>
         <h3 data-i18n="ppH5"></h3>
         <p data-i18n="ppB5"></p>
-        <p><span data-i18n="ppContact"></span><a href="mailto:yukyiuwan@gmail.com">yukyiuwan@gmail.com</a></p>
-        <p><span data-i18n="ppWebsite"></span><a href="https://nikifintech-wealth.web.app" target="_blank" rel="noopener noreferrer">https://nikifintech-wealth.web.app</a></p>
         <h3 data-i18n="ppH6"></h3>
         <p data-i18n="ppB6"></p>
+        <h3 data-i18n="ppH7"></h3>
+        <p data-i18n="ppB7"></p>
+        <p><span data-i18n="ppContact"></span><a href="mailto:yukyiuwan@gmail.com">yukyiuwan@gmail.com</a></p>
+        <p><span data-i18n="ppWebsite"></span><a href="https://nikifintech-wealth.web.app" target="_blank" rel="noopener noreferrer">https://nikifintech-wealth.web.app</a></p>
+        <h3 data-i18n="ppH8"></h3>
+        <p data-i18n="ppB8"></p>
         <p data-i18n="ppAuthDomain"></p>
       </div>
       <div class="modal-foot">
@@ -2117,17 +2097,17 @@ service cloud.firestore {
   const ADMIN_EMAIL = 'yukyiuwan@gmail.com';
   // ═══════════════════════════ END CONFIG ═════════════════════════════
 
-  // —— Privacy: memory-only state; no persistent browser storage or cookies ——
-  // Firebase is used only for login, loginLogs and the usage_logs events in logEvent().
+  // —— Privacy: calculator state is memory-only. No financial figures in browser storage. ——
+  // Firebase Auth holds the account. Firestore holds loginLogs and the usage_logs events in logEvent().
   const CURRENT_YEAR = new Date().getFullYear();
 
   const I18N = {
     'zh-HK': {
       brand: '客戶理財診斷',
-      brandSub: '隱私優先 · 本地運算 · HKD',
-      privacyTag: '客戶數據不會離開此瀏覽器',
-      privacyTagShort: '本地運算',
-      heroLine: '輸入客戶收支、債務與保障資料，即時生成理財健康診斷（僅存於本機記憶體）。',
+      brandSub: '財務數字本地計算 · HKD',
+      privacyTag: '財務數字只在本機',
+      privacyTagShort: '數字不上傳',
+      heroLine: '輸入客戶收支、債務與保障資料，即時生成理財健康診斷（財務數字只存在本機記憶體，不會上傳）。',
       inputTitle: '客戶資料輸入',
       resultTitle: '即時診斷報告',
       chartsTitle: '圖表分析',
@@ -2152,8 +2132,8 @@ service cloud.firestore {
       subCat: '分類',
       subTotal: '訂閱每月總開支',
       subAnnual: '每年訂閱總開支',
-      subTip: '建議定期審查訂閱：若年度訂閱超過收入的 3%，可考慮清理無用項目。',
-      subTipOk: '訂閱負擔屬合理範圍，仍建議每季檢查一次。',
+      subTip: '全年訂閱若超過收入約 3%，可作為檢視少用項目的參考，並非要求取消。',
+      subTipOk: '以收入約 3% 的參考線來看，訂閱負擔在範圍內。仍可每季自行檢視一次。',
       remove: '刪除',
       secDebt: '債務',
       addDebt: '新增債務',
@@ -2170,7 +2150,7 @@ service cloud.firestore {
       debtTotal: '總負債',
       debtWapr: '加權平均年利率',
       debtDti: '每月債務償還比率',
-      ccWarn: '高息信用卡警示：發現年利率超過 30% 且仍有結餘的信用卡，建議優先清還。',
+      ccWarn: '高息標示：有信用卡年利率高於 30% 且仍有結餘。這是工具門檻，不是還款指示。',
       secAssets: '資產',
       cash: '現金儲蓄',
       mpf: '強積金 MPF 結餘',
@@ -2183,7 +2163,7 @@ service cloud.firestore {
       premium: '每月保險保費',
       secProfile: '個人資料',
       secGoals: '理財目標',
-      dependentsTpl: '受養人人數（自動計算）：{n} 人 — 子女、受供養父母，以及無收入的配偶；用於計算人壽保障需要及薪俸稅免稅額。',
+      dependentsTpl: '受養人人數（自動計算）：{n} 人 — 子女、受供養父母，以及無收入的配偶；用於人壽保額經驗法則及薪俸稅免稅額。',
       age: '年齡',
       dependents: '受養人人數',
       essentialOverride: '每月必要開支',
@@ -2210,10 +2190,11 @@ service cloud.firestore {
       dimSave: '儲蓄率',
       dimEmerg: '應急基金',
       dimDebt: '債務負擔',
-      dimGap: '保障缺口',
+      dimGap: '人壽保額（經驗法則）',
       dimRetire: '退休準備度',
       scoreUnit: '分',
-      actionsTitle: '優先級行動建議',
+      actionsTitle: '經驗法則提示',
+      actionsNote: '以下只把輸入數字與本工具的一般經驗法則比較，並非個人財務、保險或強積金建議。',
       whatifTitle: '假設測試',
       whatifHint: '調整每月額外可投入金額，即時重算清債時間與退休預測',
       extraPay: '額外每月還債/儲蓄',
@@ -2221,11 +2202,13 @@ service cloud.firestore {
       chartDebt: '債務結構（本金 vs 年利率）',
       chartPayoff: '雪球 vs 雪崩還款曲線',
       chartNet: '資產、負債與淨資產',
-      disclaimer: '免責聲明：此工具只作教育參考，不構成任何財務、保險專業建議。所有客戶數據僅在此瀏覽器內存運算，重整或關閉頁面後即消失，不會上傳或儲存至任何伺服器。',
+      disclaimer: '一般免責聲明：本工具只供教育及一般參考，並非財務、保險或強積金意見，亦非受規管活動。結果是估算，並非個人建議。作決定前請諮詢持牌專業人士。',
+      privacyFooter: '私隱：你輸入的財務數字只在此瀏覽器內運算，重整、關閉或登出後即消失，不會寫入伺服器。帳號電郵、最近登入時間，以及開啟計算機、生成報告和匯出 PDF 的使用紀錄，會儲存在 Firebase，供登入及工具擁有人統計。詳見個人資料收集聲明。',
+      privacyLink: '個人資料收集聲明',
       mIncome: '每月總收入',
       mExpense: '每月總支出',
       mNetWorth: '淨資產',
-      mProtGap: '人壽保障缺口',
+      mProtGap: '與人壽經驗法則的差額',
       mRetireNeed: '退休所需資金',
       mRetireProj: '退休時累積資產',
       mRetireGap: '退休資金缺口',
@@ -2240,8 +2223,9 @@ service cloud.firestore {
       wants: '享樂開支',
       savings: '儲蓄/盈餘',
       over: '超支',
+      under: '未達參考',
       okLabel: '符合',
-      emergNeed: '建議應急基金（3–6 個月）',
+      emergNeed: '應急基金經驗法則（3–6 個月）',
       emergGap: '應急缺口',
       monthsShort: '個月',
       goalHome: '置業',
@@ -2263,22 +2247,22 @@ service cloud.firestore {
       retireReady: '退休充足度',
       ready: '充足',
       shortfall: '短缺',
-      actDebt: '優先償還高息債務',
-      actDebtDesc: '先處理年利率最高的債務，降低利息侵蝕。',
-      actEmerg: '建立應急資金',
-      actEmergDesc: '現金儲蓄應覆蓋約 3–6 個月必要開支。',
-      actGap: '補足保障缺口',
-      actGapDesc: '建議人壽保額約為年收入 10 倍並考慮受養人需要。',
-      actSave: '提高每月儲蓄',
-      actSaveDesc: '將盈餘導向目標與退休戶口。',
-      actSub: '清理訂閱開支',
-      actSubDesc: '削減非必要訂閱，釋放現金流。',
-      actRetire: '加強退休準備',
-      actRetireDesc: '以保守 3% 實質回報推算，現有儲蓄路徑可能不足。',
-      actGoal: '調整理財目標時間表',
-      actGoalDesc: '部分目標每月所需儲蓄高於現時盈餘。',
-      actGood: '維持現有良好習慣',
-      actGoodDesc: '整體理財狀況穩健，可持續定期複查。',
+      actDebt: '高息債務（經驗法則）',
+      actDebtDesc: '一般參考是先看年利率最高的結餘。年利率高於 30% 的信用卡，或加權平均高於 20%，會被標示。',
+      actEmerg: '應急現金（經驗法則）',
+      actEmergDesc: '常見參考是現金約可應付 3–6 個月必要開支。',
+      actGap: '人壽保額與經驗法則的差距',
+      actGapDesc: '一般參考約為年收入 10 倍，另加每名受養人年收入約 0.5 倍。這不是建議保額。',
+      actSave: '儲蓄率（經驗法則）',
+      actSaveDesc: '可與 50/30/20 法則中「約 20% 收入作儲蓄」的參考比較。',
+      actSub: '訂閱佔收入的比例',
+      actSubDesc: '全年訂閱超過收入約 3% 時會標示，方便檢視，並非要求取消。',
+      actRetire: '退休推算（工具假設）',
+      actRetireDesc: '按每年 3% 實質回報的假設，路徑可能低於「現時收入 70% × 20 年」的參考。',
+      actGoal: '目標與每月盈餘',
+      actGoalDesc: '按達成年份累計，部分目標每月所需高於現時盈餘。這是數字比較，不是要求改期。',
+      actGood: '各項均在參考範圍內',
+      actGoodDesc: '以本工具的一般參考值來看，各項指標均在範圍內。這不是個人理財建議。',
       noDebt: '目前無債務紀錄',
       forever: '超過 40 年 / 無法清還',
       currency: 'HKD',
@@ -2400,7 +2384,7 @@ service cloud.firestore {
       tip_income_2: '租金收入屬物業稅範圍，不計入薪俸稅。',
       tip_income_3: '每月實得薪金假設已扣除 5% 僱員強積金供款。',
       tip_fixed_1: '50/30/20 法則：必要開支 ≤ 50%、享樂開支 ≤ 30%、儲蓄 ≥ 20%。',
-      tip_fixed_2: '住屋開支（租金或按揭）宜佔收入 30–40% 以下。',
+      tip_fixed_2: '住屋開支（租金或按揭）的常見參考是不超過收入約 30–40%。',
       tip_car_1: '牌費、保險、維修等全年項目自動 ÷12 攤分至每月。',
       tip_car_2: '車貸請在「債務」加入，避免重複計算。',
       tip_car_3: '車輛價值計入淨資產，但不計入退休儲備。',
@@ -2408,18 +2392,18 @@ service cloud.firestore {
       tip_tax_2: '強積金強制性供款扣除上限 HKD 18,000。',
       tip_tax_3: 'TVC 與合資格延期年金保費合共上限 HKD 60,000；自願醫保每名受保人上限 HKD 8,000。',
       tip_tax_4: '居所貸款利息／住宅租金上限 HKD 100,000（有子女 HKD 120,000）。',
-      tip_subs_1: '建議每季檢視一次訂閱，取消不常用的項目。',
+      tip_subs_1: '可每季自行檢視一次訂閱，看看有沒有少用的項目。',
       tip_subs_2: '全年訂閱開支超過收入 3% 會被標示提醒。',
-      tip_debt_1: '債務佔收入比率（DTI）建議不超過 36%。',
-      tip_debt_2: '年利率超過 30% 的信用卡欠款應優先清還。',
+      tip_debt_1: '債務佔收入比率（DTI）的常見參考上限約為 36%。',
+      tip_debt_2: '年利率高於 30% 的信用卡結餘，本工具會標示為高息。',
       tip_debt_3: '雪崩法（先還最高利率）最省利息；雪球法（先還最小結餘）較易建立還款動力。',
-      tip_assets_1: '應急基金宜以現金持有，相當於 3–6 個月必要開支。',
+      tip_assets_1: '常見參考：應急基金以現金持有，約為 3–6 個月必要開支。',
       tip_assets_2: '強積金屬長期退休儲蓄，不應視作應急資金。',
-      tip_ins_1: '建議人壽保額約為年收入 10 倍，另加受養人需要。',
+      tip_ins_1: '人壽比較用的經驗法則：年收入約 10 倍，另加每名受養人年收入約 0.5 倍。不是個人建議保額。',
       tip_ins_2: '儲蓄／年金保單保費計入儲蓄，不當作消費。',
       tip_ins_3: '自願醫保（VHIS）及合資格延期年金（QDAP）保費可扣稅。',
       tip_goals_1: '目標按年份先後，以每月盈餘逐一檢查是否足夠。',
-      tip_goals_2: '如資金不足，可考慮延後目標年份或調整金額。',
+      tip_goals_2: '若盈餘不足，改變目標年份或金額會改變這項比較的結果。',
       methodTitle: '計算方法與參考來源',
       methodYear: '規則適用年度：2026/27',
       methodVerified: '最後核對日期：2026-09-28（稅率、免稅額、稅款寬減、強積金供款）',
@@ -2427,7 +2411,7 @@ service cloud.firestore {
       mTagVer: '已核對 GovHK',
       mTagVerIrd: '已核對 稅務局',
       mTagVerMpfa: '已核對 積金局',
-      methodNote: '稅務及強積金數字應於每個課稅年度重新核對；本工具只作教育參考，結果屬估算，不構成財務、稅務或保險建議。',
+      methodNote: '稅務及強積金數字應於每個課稅年度重新核對。本工具只供教育及一般參考，結果屬估算，並非財務、稅務、保險或強積金意見，亦非受規管活動。',
       mTagOff: '官方規則',
       mTagRot: '業界經驗法則',
       mTagAsm: '自訂假設',
@@ -2452,16 +2436,16 @@ service cloud.firestore {
       m3_3: '儲蓄型及年金保單保費計入儲蓄而非消費；儲蓄率 =（每月盈餘 + 儲蓄型保費）÷ 每月總收入。',
       m3_4: '指標評級：每月盈餘 ≥ 0 且達月薪 10% 為良好，≥ 0 為注意，負數為警示；儲蓄率 ≥ 20% 為良好，≥ 10% 為注意。',
       mH4: '應急基金',
-      m4_1: '應急基金目標為 3–6 個月必要開支；可支持月數 = 現金 ÷ 每月必要開支（≥ 6 個月為良好，≥ 3 個月為注意）。',
+      m4_1: '應急基金的經驗法則為 3–6 個月必要開支；可支持月數 = 現金 ÷ 每月必要開支（≥ 6 個月為良好，≥ 3 個月為注意）。',
       m4_2: '每月必要開支自動估算（可手動覆寫）：住屋、水電煤、電訊、雜貨、債務最低還款、保障型保費、訂閱（最多計 HKD 200）、必要類其他開支及汽車開支、稅款。',
       mH5: '債務',
       m5_1: '債務佔收入比率（DTI）= 每月債務最低還款 ÷ 每月總收入；≤ 20% 為良好，≤ 36% 為注意，高於 36% 為警示。',
       m5_2: '36% 是常見的借貸經驗法則。',
       m5_3: '香港金融管理局的按揭「供款與入息比率」（DSR）是另一套監管指標，計算口徑不同，不應與本工具的 DTI 直接比較。',
-      m5_4: '信用卡年利率高於 30% 會提示優先清還（工具門檻）；債務加權平均年利率高於 20% 亦會觸發清債建議。',
+      m5_4: '信用卡年利率高於 30% 會標示（工具門檻）；債務加權平均年利率高於 20% 亦會標示。兩者都是教育參考，不是還款指示。',
       m5_5: '雪球法（先還最小結餘）與雪崩法（先還最高利率）按月模擬：每月先計利息，再付各項最低還款，餘額集中還目標債務；模擬上限 40 年（480 個月）。',
-      mH6: '保障缺口',
-      m6_1: '建議人壽保額 = 年收入 × 10 + 每名受養人 × 年收入 × 0.5；保障缺口 = 建議保額 − 現有人壽保額（年收入 = 每月總收入 × 12）。',
+      mH6: '人壽保額經驗法則',
+      m6_1: '經驗法則（並非個人建議保額）：比較基準 = 年收入 × 10 + 每名受養人 × 年收入 × 0.5；與基準的差額 = 比較基準 − 現有人壽保額（年收入 = 每月總收入 × 12）。',
       m6_2: '受養人 = 子女 + 受供養父母／祖父母 + 無收入配偶（選擇「已婚（配偶無收入或合併評稅）」時計一人）。',
       m6_3: '只計人壽保單保額；儲蓄型保單的身故賠償不計入。',
       mH7: '退休',
@@ -2476,7 +2460,7 @@ service cloud.firestore {
       m9_2: '儲蓄率：≥ 20% 得 20 分；≥ 10% 得 14 分；≥ 0% 得 8 分；負數得 2 分。',
       m9_3: '應急基金月數：≥ 6 得 20 分；≥ 3 得 14 分；≥ 1 得 8 分；其餘得 3 分。',
       m9_4: '債務佔收入比率：≤ 20% 得 20 分；≤ 36% 得 12 分；≤ 50% 得 6 分；其餘得 2 分。',
-      m9_5: '保障缺口：無缺口得 20 分；少於 2 倍年收入得 12 分；少於 5 倍年收入得 7 分；其餘得 3 分。',
+      m9_5: '與人壽經驗法則的差額：無差額得 20 分；少於 2 倍年收入得 12 分；少於 5 倍年收入得 7 分；其餘得 3 分。',
       m9_6: '退休預測 ÷ 退休所需：≥ 100% 得 20 分；≥ 70% 得 14 分；≥ 40% 得 8 分；其餘得 3 分。',
       mH10: '訂閱',
       m10_1: '全年訂閱開支超過全年收入 3% 時，會提示檢視訂閱。',
@@ -2502,9 +2486,9 @@ service cloud.firestore {
       authTitle: '登入理財健康檢查',
       authSub: '登入後即可使用客戶理財診斷工具',
       authConfigMissing: 'Firebase 金鑰尚未貼上（CONFIG 區塊），暫時無法完成登入。',
-      loginNoticePre: '登入即代表你同意',
-      loginNoticeLink: '私隱政策',
-      loginNoticePost: '。你的財務數字會在瀏覽器本地計算，不會上傳。',
+      loginNoticePre: '登入即表示你已閱讀',
+      loginNoticeLink: '個人資料收集聲明',
+      loginNoticePost: '。財務數字只在瀏覽器計算，不會上傳；電郵、登入時間及使用紀錄會儲存在 Firebase。',
       authDomainNote: '登入認證由 Firebase（Google）提供，登入彈窗會顯示 nikifintech-wealth.firebaseapp.com，屬於本工具安全認證域名，並非第三方網站。',
       authGoogle: '使用 Google 登入',
       authOr: '或使用電郵',
@@ -2538,7 +2522,7 @@ service cloud.firestore {
       verifyNotYet: '電郵仍未驗證，請先打開電郵內的連結。',
       adminTitle: '管理員統計',
       adminRefresh: '刷新數據',
-      adminNote: '紀錄不會儲存任何用戶收支或財務數字。',
+      adminNote: '這些紀錄只包含電郵、登入時間及功能動作，不會儲存任何收支或財務數字。',
       adminLoginTitle: '登入統計',
       adminUV: '總獨立用戶數 UV',
       adminLogin7d: '最近7天登入人數',
@@ -2557,30 +2541,39 @@ service cloud.firestore {
       adminLoading: '載入統計中…',
       adminEmpty: '暫無紀錄',
       adminError: '載入統計失敗',
-      ppTitle: '理財健康檢查 — 私隱政策',
-      ppUpdated: '最後更新：2026 年 9 月 28 日',
-      ppH1: '1. 收集資料',
-      ppB1: '登入時收集你的電郵地址、顯示名稱、登入時間、瀏覽器及裝置資訊。',
-      ppH2: '2. 不會收集的資料',
-      ppB2: '你輸入的所有財務數字會在瀏覽器本地運算，永遠不會上傳或儲存到Firebase伺服器。',
-      ppH3: '3. 資料用途',
-      ppB3: '帳號身份驗證、統計工具使用次數。我們不會出售或分享你的個人資料作市場推廣用途。',
-      ppH4: '4. 資料保留',
-      ppB4: '帳號及登入紀錄會在帳號生效期間保留，你可隨時要求刪除個人資料。',
-      ppH5: '5. 你的權利',
-      ppB5: '你有權查閱、更正或刪除你的個人資料。',
-      ppContact: '聯絡：',
+      ppTitle: '個人資料收集聲明',
+      ppUpdated: '最後更新：2026 年 10 月 6 日',
+      ppH1: '1. 資料使用者',
+      ppB1: '本工具（HK Client Wealth Check · 客戶理財診斷）由工具營運者運作。按《個人資料（私隱）條例》提出的查閱、改正或刪除要求，請聯絡下方電郵。',
+      ppH2: '2. 收集的資料',
+      ppB2: '登入後才可使用計算機。你在計算機輸入的財務數字不是必須提供的資料，亦不會被收集。',
+      ppL2a: '帳號（Firebase Authentication，由 Google 提供）：電郵地址、登入方式（Google 或電郵密碼）、電郵是否已驗證、帳號建立時間及最近登入時間。以電郵註冊時，密碼由 Firebase 保管，本頁不會讀取或另存密碼。註冊時如填寫顯示名稱，會存於帳號。使用 Google 登入時，Google 可能向 Firebase 提供名稱及頭像網址。',
+      ppL2b: '登入紀錄（Firestore 的 loginLogs，每個帳號一筆，其後每次登入覆寫）：電郵地址、最近一次登入時間。文件編號是 Firebase 用戶編號（uid）。',
+      ppL2c: '使用紀錄（Firestore 的 usage_logs，每次事件新增一筆）：用戶編號、電郵地址、動作（開啟計算機、生成報告或匯出 PDF）及時間。',
+      ppL2d: '不會收集或上傳：收入、開支、債務、資產、保單、理財目標、客戶姓名、顧問姓名，以及你在計算機輸入的任何其他數字。這些資料只在瀏覽器記憶體運算，重整頁面、關閉頁面或登出後即消失，不會寫入 Firestore、localStorage、sessionStorage 或 IndexedDB。',
+      ppL2e: '本頁沒有載入 Firebase Analytics，也不會把瀏覽器或裝置型號寫入 Firestore。Google Firebase 作為登入及資料庫供應商，可能按其服務條款處理技術紀錄（例如 IP 位址）。',
+      ppH3: '3. 是否必須提供',
+      ppB3: '電郵及登入是使用計算機的必要條件；不登入便不能使用工具。顯示名稱可選填。計算機內的財務數字屬自願輸入，而且不會離開瀏覽器。',
+      ppH4: '4. 使用目的',
+      ppB4: '建立及驗證帳號、記錄最近登入時間、統計功能使用次數（開啟計算機、生成報告、匯出 PDF），以及處理查閱、改正或刪除要求。個人資料不會被出售，亦不會用於市場推廣，或用於向你提供個人化的保險、強積金或投資建議。',
+      ppH5: '5. 誰可查閱',
+      ppB5: '其他登入用戶不能讀取你的紀錄。只有工具營運者的管理員帳號（yukyiuwan@gmail.com，且電郵已驗證）可在管理員面板讀取登入及使用紀錄。資料存放於 Google Firebase（Authentication 及 Cloud Firestore），可能在香港以外地方處理。除上述用途外，不會向其他類別的人士轉移。Firestore 的實際地區以 Firebase 控制台的資料庫設定為準。',
+      ppH6: '6. 保留',
+      ppB6: '帳號資料在帳號存續期間保留。loginLogs 只保留最近一次登入（每次登入覆寫），直至你要求刪除或帳號被刪除。usage_logs 會累積保存；本工具沒有自動刪除期限，直至你要求刪除或營運者刪除。財務數字不會被保存。',
+      ppH7: '7. 查閱、改正及刪除',
+      ppB7: '你有權要求查閱及改正你的個人資料，亦可要求刪除帳號、登入紀錄及使用紀錄。請電郵並註明帳號所用的電郵地址。查閱要求一般會在 40 日內回覆。刪除後，該電郵不能再以此帳號登入，除非重新註冊。',
+      ppContact: '查閱、改正或刪除請電郵：',
       ppWebsite: '網站：',
-      ppH6: '6. Cookie',
-      ppB6: '只使用維持登入必要Cookie，沒有廣告追蹤Cookie。',
+      ppH8: '8. Cookie 及瀏覽器儲存',
+      ppB8: '本頁沒有自行設定 Cookie，亦沒有廣告或跨網站追蹤 Cookie。Firebase Authentication 會在瀏覽器以 IndexedDB 保存登入狀態，以便保持登入；登出時會清除並重新載入頁面。財務數字不使用這些儲存。',
       ppAuthDomain: '登入認證由 Firebase（Google）提供，登入彈窗會顯示 nikifintech-wealth.firebaseapp.com，屬於本工具安全認證域名，並非第三方網站。'
     },
     en: {
       brand: 'Client Wealth Check',
-      brandSub: 'Privacy-first · Local only · HKD',
-      privacyTag: 'Client data never leaves this browser',
-      privacyTagShort: 'Local only',
-      heroLine: 'Enter cashflow, debts and cover to generate an instant wealth health report (memory-only).',
+      brandSub: 'Figures calculated locally · HKD',
+      privacyTag: 'Figures stay on this device',
+      privacyTagShort: 'Figures not uploaded',
+      heroLine: 'Enter cashflow, debts and cover to generate an instant wealth-health report (financial figures stay in memory and are not uploaded).',
       inputTitle: 'Client inputs',
       resultTitle: 'Live diagnostic',
       chartsTitle: 'Charts',
@@ -2605,8 +2598,8 @@ service cloud.firestore {
       subCat: 'Category',
       subTotal: 'Monthly subscription total',
       subAnnual: 'Annual subscription spend',
-      subTip: 'Review subscriptions: if annual spend exceeds 3% of income, consider cancelling unused ones.',
-      subTipOk: 'Subscription load looks reasonable; still review quarterly.',
+      subTip: 'If annual subscriptions exceed about 3% of income, that is a prompt to review rarely used items, not a requirement to cancel them.',
+      subTipOk: 'Against a reference line of about 3% of income, subscription spending is within range. A quarterly review is still useful.',
       remove: 'Remove',
       secDebt: 'Debts',
       addDebt: 'Add debt',
@@ -2623,7 +2616,7 @@ service cloud.firestore {
       debtTotal: 'Total liabilities',
       debtWapr: 'Weighted avg APR',
       debtDti: 'Debt-to-income (monthly)',
-      ccWarn: 'High-interest alert: credit card APR > 30% with balance — prioritise repayment.',
+      ccWarn: 'High-interest flag: a credit card has an APR above 30% and a balance. This is a tool threshold, not an instruction to repay.',
       secAssets: 'Assets',
       cash: 'Cash savings',
       mpf: 'MPF balance',
@@ -2636,7 +2629,7 @@ service cloud.firestore {
       premium: 'Monthly insurance premium',
       secProfile: 'Personal profile',
       secGoals: 'Financial goals',
-      dependentsTpl: 'Dependents (auto): {n} — children, dependent parents and a non-earning spouse; used for life cover needs and tax allowances.',
+      dependentsTpl: 'Dependents (auto): {n} — children, dependent parents and a non-earning spouse; used for the life-cover rule of thumb and for salaries-tax allowances.',
       age: 'Age',
       dependents: 'Dependents',
       essentialOverride: 'Monthly essential expenses',
@@ -2663,10 +2656,11 @@ service cloud.firestore {
       dimSave: 'Savings rate',
       dimEmerg: 'Emergency fund',
       dimDebt: 'Debt burden',
-      dimGap: 'Protection gap',
+      dimGap: 'Life cover (rule of thumb)',
       dimRetire: 'Retirement readiness',
       scoreUnit: 'pts',
-      actionsTitle: 'Priority action list',
+      actionsTitle: 'Rule-of-thumb notes',
+      actionsNote: 'These notes only compare the figures entered with this tool\'s general rules of thumb. They are not personal financial, insurance or MPF advice.',
       whatifTitle: 'What-if test',
       whatifHint: 'Adjust extra monthly amount to recalculate payoff & retirement',
       extraPay: 'Extra monthly debt/savings',
@@ -2674,11 +2668,13 @@ service cloud.firestore {
       chartDebt: 'Debt structure (principal vs APR)',
       chartPayoff: 'Snowball vs Avalanche curve',
       chartNet: 'Assets, liabilities & net worth',
-      disclaimer: 'Disclaimer: This tool is for educational reference only and does not constitute financial or insurance advice. All client data is processed only in browser memory, disappears on refresh/close, and is never uploaded or stored on any server.',
+      disclaimer: 'General disclaimer: This tool is for education and general reference only. It is not financial, insurance or MPF advice and is not a regulated activity. Results are estimates, not personal recommendations. Consult a licensed professional before making a decision.',
+      privacyFooter: 'Privacy: Financial figures you enter are processed only in this browser and disappear when you refresh, close the page or sign out. They are not written to a server. Your account email, last sign-in time, and usage events for opening the calculator, generating a report and exporting a PDF are stored in Firebase for sign-in and for the tool owner\'s statistics. See the Personal Information Collection Statement.',
+      privacyLink: 'Personal Information Collection Statement',
       mIncome: 'Total monthly income',
       mExpense: 'Total monthly expenses',
       mNetWorth: 'Net worth',
-      mProtGap: 'Life protection gap',
+      mProtGap: 'Gap vs life-cover rule of thumb',
       mRetireNeed: 'Capital needed at retirement',
       mRetireProj: 'Projected assets at retirement',
       mRetireGap: 'Retirement shortfall',
@@ -2693,8 +2689,9 @@ service cloud.firestore {
       wants: 'Wants',
       savings: 'Savings / surplus',
       over: 'Over',
+      under: 'Below guide',
       okLabel: 'OK',
-      emergNeed: 'Suggested emergency fund (3–6 mo)',
+      emergNeed: 'Emergency-fund rule of thumb (3–6 mo)',
       emergGap: 'Emergency gap',
       monthsShort: 'mo',
       goalHome: 'Home',
@@ -2716,22 +2713,22 @@ service cloud.firestore {
       retireReady: 'Retirement readiness',
       ready: 'On track',
       shortfall: 'Shortfall',
-      actDebt: 'Pay high-interest debt first',
-      actDebtDesc: 'Attack the highest APR balances to cut interest drag.',
-      actEmerg: 'Build emergency fund',
-      actEmergDesc: 'Cash should cover about 3–6 months of essentials.',
-      actGap: 'Close protection gap',
-      actGapDesc: 'Suggested life cover ≈ 10× annual income plus dependent needs.',
-      actSave: 'Raise monthly savings',
-      actSaveDesc: 'Channel surplus into goals and retirement accounts.',
-      actSub: 'Trim subscriptions',
-      actSubDesc: 'Cancel unused subscriptions to free cashflow.',
-      actRetire: 'Strengthen retirement path',
-      actRetireDesc: 'At a conservative 3% real return, current path may fall short.',
-      actGoal: 'Recalibrate goal timelines',
-      actGoalDesc: 'Some goals need more monthly saving than current surplus.',
-      actGood: 'Keep the good habits',
-      actGoodDesc: 'Overall profile looks solid — review periodically.',
+      actDebt: 'High-interest debt (rule of thumb)',
+      actDebtDesc: 'A general guide is to look at the highest APR first. Credit cards above 30% APR, or a weighted average above 20%, are flagged.',
+      actEmerg: 'Emergency cash (rule of thumb)',
+      actEmergDesc: 'A common guide is cash covering about 3–6 months of essential spending.',
+      actGap: 'Life cover vs a rule of thumb',
+      actGapDesc: 'A general guide is about 10× annual income, plus about 0.5× annual income per dependant. This is not a recommended sum assured.',
+      actSave: 'Savings rate (rule of thumb)',
+      actSaveDesc: 'This can be compared with the 50/30/20 guide of saving about 20% of income.',
+      actSub: 'Subscriptions as a share of income',
+      actSubDesc: 'Annual subscriptions above about 3% of income are flagged for review, not as a request to cancel them.',
+      actRetire: 'Retirement illustration (tool assumption)',
+      actRetireDesc: 'At an assumed 3% real return, the path may sit below a reference of 70% of current income for 20 years.',
+      actGoal: 'Goals and monthly surplus',
+      actGoalDesc: 'In target-year order, some goals need more each month than the current surplus. This compares the figures; it does not ask you to change the date.',
+      actGood: 'Within the reference ranges',
+      actGoodDesc: 'Against this tool\'s general reference values, the indicators are within range. This is not personal financial advice.',
       noDebt: 'No debts recorded',
       forever: 'Over 40 years / not payable',
       currency: 'HKD',
@@ -2853,7 +2850,7 @@ service cloud.firestore {
       tip_income_2: 'Rental income falls under property tax, not salaries tax.',
       tip_income_3: 'Net monthly pay is assumed to be after the 5% employee MPF contribution.',
       tip_fixed_1: '50/30/20 rule: needs ≤ 50%, wants ≤ 30%, savings ≥ 20%.',
-      tip_fixed_2: 'Housing (rent or mortgage) should ideally stay below 30–40% of income.',
+      tip_fixed_2: 'A common guide is to keep housing (rent or mortgage) under about 30–40% of income.',
       tip_car_1: 'Annual items (licence, insurance, maintenance) are spread monthly (÷12).',
       tip_car_2: 'Add any car loan under Debts to avoid double counting.',
       tip_car_3: 'Car value counts towards net worth but not retirement savings.',
@@ -2861,18 +2858,18 @@ service cloud.firestore {
       tip_tax_2: 'Mandatory MPF contributions: deduction cap HKD 18,000.',
       tip_tax_3: 'TVC and QDAP premiums: combined cap HKD 60,000. VHIS: HKD 8,000 per insured person.',
       tip_tax_4: 'Home loan interest / domestic rent: cap HKD 100,000 (HKD 120,000 with children).',
-      tip_subs_1: 'Review subscriptions quarterly and cancel those rarely used.',
+      tip_subs_1: 'A quarterly look at subscriptions can show which ones are rarely used.',
       tip_subs_2: 'Annual subscriptions above 3% of income are flagged.',
-      tip_debt_1: 'Debt-to-income (DTI) is recommended at 36% or below.',
-      tip_debt_2: 'Prioritise credit card balances charging over 30% APR.',
+      tip_debt_1: 'A common reference ceiling for debt-to-income (DTI) is about 36%.',
+      tip_debt_2: 'This tool flags credit-card balances with an APR above 30% as high interest.',
       tip_debt_3: 'Avalanche (highest APR first) saves the most interest; snowball (smallest balance first) builds momentum.',
-      tip_assets_1: 'Hold an emergency fund of 3–6 months\' essential expenses in cash.',
+      tip_assets_1: 'A common guide is to hold about 3–6 months of essential expenses in cash.',
       tip_assets_2: 'MPF is long-term retirement money, not an emergency fund.',
-      tip_ins_1: 'Suggested life cover ≈ 10× annual income plus dependents\' needs.',
+      tip_ins_1: 'Rule of thumb used for the life-cover comparison: about 10× annual income, plus about 0.5× annual income per dependant. Not a personal sum-assured recommendation.',
       tip_ins_2: 'Savings / annuity premiums count as savings, not spending.',
       tip_ins_3: 'VHIS and QDAP premiums are tax-deductible.',
       tip_goals_1: 'Goals are checked in target-year order against the monthly surplus.',
-      tip_goals_2: 'If short, consider pushing back the target year or adjusting the amount.',
+      tip_goals_2: 'If the surplus is short, changing the target year or the amount changes the result of this comparison.',
       methodTitle: 'Methodology & sources',
       methodYear: 'Rules year: 2026/27',
       methodVerified: 'Last verified: 2026-09-28 (tax rates, allowances, tax reduction, MPF contributions)',
@@ -2880,7 +2877,7 @@ service cloud.firestore {
       mTagVer: 'Verified: GovHK',
       mTagVerIrd: 'Verified: IRD',
       mTagVerMpfa: 'Verified: MPFA',
-      methodNote: 'Tax and MPF figures should be re-verified every tax year. This tool is for educational reference only; results are estimates, not financial, tax or insurance advice.',
+      methodNote: 'Tax and MPF figures should be re-checked each tax year. This tool is for education and general reference only. Results are estimates, not financial, tax, insurance or MPF advice, and not a regulated activity.',
       mTagOff: 'Official rule',
       mTagRot: 'Rule of thumb',
       mTagAsm: 'Tool assumption',
@@ -2905,16 +2902,16 @@ service cloud.firestore {
       m3_3: 'Savings and annuity policy premiums count as savings, not spending; savings rate = (monthly surplus + savings premiums) ÷ total monthly income.',
       m3_4: 'KPI ratings: surplus ≥ 0 and at least 10% of salary is good, ≥ 0 is watch, negative is alert; savings rate ≥ 20% is good, ≥ 10% is watch.',
       mH4: 'Emergency fund',
-      m4_1: 'Target is 3–6 months of essential expenses; months covered = cash ÷ monthly essential expenses (≥ 6 good, ≥ 3 watch).',
+      m4_1: 'The emergency-fund rule of thumb is 3–6 months of essential expenses; months covered = cash ÷ monthly essential expenses (≥ 6 good, ≥ 3 watch).',
       m4_2: 'Monthly essential expenses are estimated automatically (can be overridden): housing, utilities, telecom, groceries, debt minimums, protection premiums, subscriptions (up to HKD 200), essential other and vehicle costs, and tax.',
       mH5: 'Debt',
       m5_1: 'Debt-to-income ratio (DTI) = monthly debt minimum payments ÷ total monthly income; ≤ 20% good, ≤ 36% watch, above 36% alert.',
       m5_2: '36% is a common lending rule of thumb.',
       m5_3: 'The HKMA mortgage debt-servicing ratio (DSR) is a different regulatory measure with its own definition and should not be compared directly with this tool\'s DTI.',
-      m5_4: 'Credit cards above 30% APR are flagged for priority repayment (tool threshold); a weighted average debt APR above 20% also triggers the debt action.',
+      m5_4: 'Credit-card APR above 30% is flagged (a threshold set by this tool). A weighted average APR above 20% is also flagged. Both are educational markers, not repayment instructions.',
       m5_5: 'Snowball (smallest balance first) and avalanche (highest rate first) are simulated monthly: interest accrues, minimums are paid, and the remainder goes to the target debt; the simulation is capped at 40 years (480 months).',
-      mH6: 'Protection gap',
-      m6_1: 'Suggested life cover = annual income × 10 + annual income × 0.5 per dependent; gap = suggested cover − existing life cover (annual income = total monthly income × 12).',
+      mH6: 'Life-cover rule of thumb',
+      m6_1: 'Rule of thumb (not a personal sum assured): benchmark = annual income × 10 + annual income × 0.5 per dependant; gap versus benchmark = benchmark − existing life cover (annual income = total monthly income × 12).',
       m6_2: 'Dependents = children + dependent parents/grandparents + non-earning spouse (counted as one when "Married (spouse has no income / joint assessment)" is selected).',
       m6_3: 'Only life policy cover is counted; death benefits of savings policies are excluded.',
       mH7: 'Retirement',
@@ -2929,7 +2926,7 @@ service cloud.firestore {
       m9_2: 'Savings rate: ≥ 20% scores 20; ≥ 10% scores 14; ≥ 0% scores 8; negative scores 2.',
       m9_3: 'Emergency fund months: ≥ 6 scores 20; ≥ 3 scores 14; ≥ 1 scores 8; otherwise 3.',
       m9_4: 'Debt-to-income ratio: ≤ 20% scores 20; ≤ 36% scores 12; ≤ 50% scores 6; otherwise 2.',
-      m9_5: 'Protection gap: no gap scores 20; under 2× annual income scores 12; under 5× annual income scores 7; otherwise 3.',
+      m9_5: 'Gap versus the life-cover rule of thumb: no gap scores 20; under 2× annual income scores 12; under 5× annual income scores 7; otherwise 3.',
       m9_6: 'Projected ÷ needed retirement assets: ≥ 100% scores 20; ≥ 70% scores 14; ≥ 40% scores 8; otherwise 3.',
       mH10: 'Subscriptions',
       m10_1: 'Subscriptions are flagged for review when annual subscription spending exceeds 3% of annual income.',
@@ -2955,9 +2952,9 @@ service cloud.firestore {
       authTitle: 'Sign in to Wealth Check',
       authSub: 'Sign in to use the client wealth diagnostic tool',
       authConfigMissing: 'Firebase keys are not pasted yet (CONFIG block), so sign-in cannot complete.',
-      loginNoticePre: 'By signing in, you agree to our ',
-      loginNoticeLink: 'Privacy Policy',
-      loginNoticePost: '. Your financial figures are calculated locally and never uploaded.',
+      loginNoticePre: 'By signing in you confirm you have read the ',
+      loginNoticeLink: 'Personal Information Collection Statement',
+      loginNoticePost: '. Financial figures are calculated only in the browser and are not uploaded. Your email, sign-in time and usage events are stored in Firebase.',
       authDomainNote: "Sign-in is provided by Firebase (Google). The sign-in window shows nikifintech-wealth.firebaseapp.com, which is this tool's secure authentication domain, not a third-party website.",
       authGoogle: 'Sign in with Google',
       authOr: 'or use email',
@@ -2991,7 +2988,7 @@ service cloud.firestore {
       verifyNotYet: 'Email not verified yet. Please open the link in the email first.',
       adminTitle: 'Admin stats',
       adminRefresh: 'Refresh',
-      adminNote: 'Logs do not store any income, expense, or other financial figures.',
+      adminNote: 'These logs contain only email, sign-in time and feature actions. They do not store income, expenses or other financial figures.',
       adminLoginTitle: 'Logins',
       adminUV: 'Unique users (UV)',
       adminLogin7d: 'Users signed in, last 7 days',
@@ -3010,22 +3007,31 @@ service cloud.firestore {
       adminLoading: 'Loading statistics…',
       adminEmpty: 'No records yet',
       adminError: "Couldn't load statistics",
-      ppTitle: 'Niki Wealth Check — Privacy Policy',
-      ppUpdated: 'Last updated: 28 September 2026',
-      ppH1: '1. Information collected',
-      ppB1: 'Your email address, display name, login timestamp and browser/device information when you log in.',
-      ppH2: '2. Information NOT collected',
-      ppB2: 'All financial figures you enter into the calculator are calculated locally in your browser and will NEVER be uploaded or saved on Firebase servers.',
-      ppH3: '3. Usage of data',
-      ppB3: 'Authenticate user account, count tool usage frequency. We will NOT sell or share your personal data for marketing purposes.',
-      ppH4: '4. Data retention',
-      ppB4: 'Account and login records remain while your account is active. You may request full data deletion at any time.',
-      ppH5: '5. Your rights',
-      ppB5: 'You have the right to access, correct or delete your personal data.',
-      ppContact: 'Contact: ',
+      ppTitle: 'Personal Information Collection Statement',
+      ppUpdated: 'Last updated: 6 October 2026',
+      ppH1: '1. Data user',
+      ppB1: 'This tool (HK Client Wealth Check · 客戶理財診斷) is run by its operator. Requests to access, correct or delete personal data under the Personal Data (Privacy) Ordinance should be sent to the email below.',
+      ppH2: '2. What is collected',
+      ppB2: 'You need to sign in before using the calculator. Financial figures you type into the calculator are not required to be provided, and they are not collected.',
+      ppL2a: 'Account (Firebase Authentication, provided by Google): email address, sign-in method (Google or email and password), whether the email is verified, and the account creation and last sign-in times. For email sign-up, the password is held by Firebase; this page does not read or store it separately. A display name is stored on the account only if you enter one at sign-up. Google sign-in may also pass a name and photo URL to Firebase.',
+      ppL2b: 'Sign-in record (Firestore collection loginLogs, one document per account, overwritten on each sign-in): email address and the time of the latest sign-in. The document id is the Firebase user id (uid).',
+      ppL2c: 'Usage record (Firestore collection usage_logs, one new document per event): user id, email address, action (open the calculator, generate a report, or export a PDF) and the time.',
+      ppL2d: 'Not collected and not uploaded: income, expenses, debts, assets, policies, goals, client name, adviser name, or any other figure typed into the calculator. Those stay in browser memory and disappear when you refresh, close the page or sign out. They are not written to Firestore, localStorage, sessionStorage or IndexedDB.',
+      ppL2e: 'This page does not load Firebase Analytics and does not write a browser or device model into Firestore. Google Firebase, as the sign-in and database provider, may process technical logs (such as an IP address) under its own terms.',
+      ppH3: '3. Obligatory or voluntary',
+      ppB3: 'An email and a sign-in are required to use the calculator; without them the tool cannot be used. The display name is optional. Financial figures in the calculator are voluntary and do not leave the browser.',
+      ppH4: '4. Purposes',
+      ppB4: 'To create and authenticate the account, to record the latest sign-in, to count feature use (opening the calculator, generating a report, exporting a PDF), and to handle access, correction and deletion requests. Personal data is not sold, is not used for marketing, and is not used to give you personalised insurance, MPF or investment advice.',
+      ppH5: '5. Who can access it',
+      ppB5: 'Other signed-in users cannot read your records. Only the operator\'s admin account (yukyiuwan@gmail.com, and only when that email is verified) can read the sign-in and usage logs in the admin panel. The data is stored with Google Firebase (Authentication and Cloud Firestore) and may be processed outside Hong Kong. It is not transferred to any other class of person for these purposes. The actual Firestore region is whatever is set for the database in the Firebase console.',
+      ppH6: '6. Retention',
+      ppB6: 'Account data is kept while the account exists. loginLogs keeps only the latest sign-in (each sign-in overwrites it) until you ask for deletion or the account is deleted. usage_logs accumulate; this tool has no automatic deletion period, and they stay until you ask for deletion or the operator deletes them. Financial figures are not kept.',
+      ppH7: '7. Access, correction and deletion',
+      ppB7: 'You may ask to access and correct your personal data, and you may ask for your account, sign-in record and usage records to be deleted. Email the address below and include the email on the account. Access requests are normally answered within 40 days. After deletion, that email cannot sign in on this account unless it is registered again.',
+      ppContact: 'Access, correction or deletion: ',
       ppWebsite: 'Website: ',
-      ppH6: '6. Cookies',
-      ppB6: 'Only essential cookies required to maintain login state. No advertising or cross-site tracking cookies.',
+      ppH8: '8. Cookies and browser storage',
+      ppB8: 'This page does not set its own cookies and does not use advertising or cross-site tracking cookies. Firebase Authentication keeps the sign-in session in IndexedDB so you stay signed in; signing out clears it and reloads the page. Financial figures are not put in that storage.',
       ppAuthDomain: "Sign-in is provided by Firebase (Google). The sign-in window shows nikifintech-wealth.firebaseapp.com, which is this tool's secure authentication domain, not a third-party website."
     }
   };
@@ -3796,7 +3802,7 @@ service cloud.firestore {
     var ruleHtml = '<div class="metric"><b>' + t('rule502030') + '</b></div>';
     ruleHtml += metricRule(t('needs'), r.needsAmt, r.needsPct, 50);
     ruleHtml += metricRule(t('wants'), r.wantsAmt, r.wantsPct, 30);
-    ruleHtml += metricRule(t('savings'), r.saveAmt, r.savePct, 20);
+    ruleHtml += metricRule(t('savings'), r.saveAmt, r.savePct, 20, true);
     ruleHtml += '<div class="metric">' + t('emergNeed') + '<b>' + money(r.emergLow) + ' – ' + money(r.emergHigh) + '</b></div>';
     ruleHtml += '<div class="metric">' + t('emergGap') + '<b>' + money(r.emergGap) + '</b></div>';
     r.goals.forEach(function (g) {
@@ -3806,9 +3812,11 @@ service cloud.firestore {
     document.getElementById('ruleGrid').innerHTML = ruleHtml;
   }
 
-  function metricRule(label, amt, p, limit) {
-    var flag = p > limit + 0.5 ? (' · ' + t('over')) : (' · ' + t('okLabel'));
-    return '<div class="metric">' + label + ' (≤' + limit + '%)' + '<b>' + money(amt) + ' (' + pct(p) + ')' + flag + '</b></div>';
+  function metricRule(label, amt, p, limit, atLeast) {
+    var bad = atLeast ? (p + 0.5 < limit) : (p > limit + 0.5);
+    var flag = bad ? (' · ' + t(atLeast ? 'under' : 'over')) : (' · ' + t('okLabel'));
+    var lim = (atLeast ? ' (≥' : ' (≤') + limit + '%)';
+    return '<div class="metric">' + label + lim + '<b>' + money(amt) + ' (' + pct(p) + ')' + flag + '</b></div>';
   }
 
   function renderActions(r) {

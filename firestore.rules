@@ -1,0 +1,78 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Admin read access for the in-page stats panel.
+    //
+    // The client treats yukyiuwan@gmail.com as admin only when that account is
+    // verified (see isAdmin() in index.html). email_verified is set by Firebase
+    // Auth and cannot be flipped by page JavaScript. The comparison is
+    // case-sensitive and must stay in lockstep with ADMIN_EMAIL.
+    //
+    // Trade-off versus a custom claim (request.auth.token.admin == true):
+    // a claim cannot be self-assigned and still works if the operator changes
+    // their sign-in email, but setting it requires the Admin SDK, which this
+    // static site does not have. A verified-email check works with the current
+    // client and needs no extra backend. Move to a custom claim before anyone
+    // other than this account should see the logs.
+    function isAdmin() {
+      return request.auth != null
+        && request.auth.token.email_verified == true
+        && request.auth.token.email == "yukyiuwan@gmail.com";
+    }
+
+    // Same notion of "verified" as isVerified() in index.html: an email/password
+    // user must have confirmed their email; Google sign-in counts as verified.
+    function isVerifiedUser() {
+      return request.auth != null
+        && (
+          request.auth.token.email_verified == true
+          || request.auth.token.firebase.sign_in_provider == "google.com"
+        );
+    }
+
+    function writesOwnEmail() {
+      return request.auth.token.email is string
+        && request.resource.data.email == request.auth.token.email;
+    }
+
+    // loginLogs/{uid}: one merged document per account.
+    // Client write (any signed-in user, including before email verification):
+    //   loginLogs.doc(user.uid).set({ email, lastLogin }, { merge: true })
+    // Create requires exactly those two fields. Update may only change them,
+    // so an older document that already has extra keys can still be refreshed
+    // without letting the client add new ones. Nobody except the admin can read.
+    match /loginLogs/{userId} {
+      allow create: if request.auth != null
+        && request.auth.uid == userId
+        && writesOwnEmail()
+        && request.resource.data.keys().hasOnly(["email", "lastLogin"])
+        && request.resource.data.lastLogin is timestamp;
+
+      allow update: if request.auth != null
+        && request.auth.uid == userId
+        && writesOwnEmail()
+        && request.resource.data.lastLogin is timestamp
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(["email", "lastLogin"]);
+
+      allow read: if isAdmin();
+    }
+
+    // usage_logs: append-only events from logEvent(), and only after isVerified().
+    // Fields are exactly uid, email, action, timestamp. action is one of the
+    // three strings the client writes. No update, delete, or non-admin read.
+    match /usage_logs/{logId} {
+      allow create: if isVerifiedUser()
+        && writesOwnEmail()
+        && request.resource.data.keys().hasOnly(["uid", "email", "action", "timestamp"])
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.action in [
+          "open_finance_calculator",
+          "generate_report",
+          "export_pdf"
+        ]
+        && request.resource.data.timestamp is timestamp;
+
+      allow read: if isAdmin();
+    }
+  }
+}
