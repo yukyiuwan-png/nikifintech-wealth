@@ -8,6 +8,7 @@
       "firebase.json",
       "firestore.rules",
       "README.md",
+      "index.backup-*.html",
       "**/.*",
       "**/node_modules/**"
     ],
